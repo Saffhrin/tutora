@@ -203,8 +203,11 @@ async def upload_source(file: UploadFile = File(...)) -> dict:
         db.finish_source(source_id, "failed",
                          "No readable text or description was extracted from this file.")
         return db.source_dict(db.get_source(source_id))
-    for unit in units:
-        db.add_unit(source_id, unit["text"], unit.get("location") or {},
+    for index, unit in enumerate(units):
+        location = unit.get("location") or {}
+        if not location:
+            location = {"label": f"paragraph {index + 1}"}
+        db.add_unit(source_id, unit["text"], location,
                     unit.get("visual_description"), topic_name_hint=unit.get("topic_name") or "")
     db.finish_source(source_id, "ready")
     return db.source_dict(db.get_source(source_id))
