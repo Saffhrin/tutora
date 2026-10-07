@@ -24,7 +24,18 @@ MIN_QUERY_TERMS = 1
 
 def tokenize(text: str) -> list[str]:
     words = re.findall(r"[a-zA-Z][a-zA-Z\-]{2,}|\d+(?:\.\d+)?", text.lower())
-    return [w for w in words if w not in db.STOPWORDS]
+    return [_stem(w) for w in words if w not in db.STOPWORDS]
+
+
+def _stem(word: str) -> str:
+    """Very light suffix folding so 'models'/'model' and 'means'/'mean' match."""
+    if len(word) > 4 and word.endswith("ies"):
+        return word[:-3] + "y"
+    if len(word) > 4 and word.endswith("es") and not word.endswith(("ses", "xes")):
+        return word[:-2]
+    if len(word) > 3 and word.endswith("s") and not word.endswith("ss"):
+        return word[:-1]
+    return word
 
 
 class Index:
@@ -63,13 +74,18 @@ class Index:
                 continue
             counts, length = self.tf[i], self.lengths[i]
             score = 0.0
+            matched = 0
             for term in terms:
                 freq = counts.get(term, 0)
                 if not freq:
                     continue
+                matched += 1
                 idf = math.log(1 + (self.n - self.df[term] + 0.5) / (self.df[term] + 0.5))
                 score += idf * (freq * (k1 + 1)) / (freq + k1 * (1 - b + b * length / self.avg_len))
             if score:
+                # Reward units that actually cover more of the question (term coverage),
+                # so a short overview page cannot outrank the page that answers the question.
+                score *= 1 + 0.35 * (matched - 1)
                 scored.append((i, score))
         scored.sort(key=lambda pair: -pair[1])
         return [(self.rows[i], score) for i, score in scored[:k]]

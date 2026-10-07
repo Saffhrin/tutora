@@ -1,0 +1,303 @@
+{
+  "corpus": {
+    "sources": 1,
+    "units": 7,
+    "topics": 7
+  },
+  "k": 4,
+  "metrics": {
+    "source_hit_at_k": 1.0,
+    "grounded_rate_in_material": 1.0,
+    "citation_location_accuracy": 1.0,
+    "refusal_accuracy_off_material": 1.0,
+    "citation_integrity_verbatim": 1.0,
+    "answer_token_grounding": 0.7832,
+    "question_novelty_rate": 1.0
+  },
+  "in_material_detail": [
+    {
+      "question": "What is the difference between classification and regression?",
+      "expected_slide": 2,
+      "retrieved_slides": [
+        2,
+        3,
+        1
+      ],
+      "source_hit": true,
+      "grounded": true,
+      "cited_slide": 2,
+      "citation_correct": true
+    },
+    {
+      "question": "What does generalization mean for a supervised model?",
+      "expected_slide": 2,
+      "retrieved_slides": [
+        2,
+        1,
+        5,
+        6
+      ],
+      "source_hit": true,
+      "grounded": true,
+      "cited_slide": 2,
+      "citation_correct": true
+    },
+    {
+      "question": "How is the prediction of simple linear regression computed?",
+      "expected_slide": 3,
+      "retrieved_slides": [
+        3,
+        1,
+        6,
+        2
+      ],
+      "source_hit": true,
+      "grounded": true,
+      "cited_slide": 3,
+      "citation_correct": true
+    },
+    {
+      "question": "How do I compute mean squared error?",
+      "expected_slide": 3,
+      "retrieved_slides": [
+        3,
+        5,
+        7,
+        2
+      ],
+      "source_hit": true,
+      "grounded": true,
+      "cited_slide": 3,
+      "citation_correct": true
+    },
+    {
+      "question": "Why does mean squared error penalize large errors?",
+      "expected_slide": 3,
+      "retrieved_slides": [
+        3,
+        5,
+        2,
+        4
+      ],
+      "source_hit": true,
+      "grounded": true,
+      "cited_slide": 3,
+      "citation_correct": true
+    },
+    {
+      "question": "How does gradient descent update a parameter?",
+      "expected_slide": 4,
+      "retrieved_slides": [
+        4,
+        7,
+        1,
+        6
+      ],
+      "source_hit": true,
+      "grounded": true,
+      "cited_slide": 4,
+      "citation_correct": true
+    },
+    {
+      "question": "What does the learning rate control?",
+      "expected_slide": 4,
+      "retrieved_slides": [
+        4,
+        1,
+        2
+      ],
+      "source_hit": true,
+      "grounded": true,
+      "cited_slide": 4,
+      "citation_correct": true
+    },
+    {
+      "question": "What happens if the learning rate is too large?",
+      "expected_slide": 4,
+      "retrieved_slides": [
+        4,
+        5,
+        1,
+        2
+      ],
+      "source_hit": true,
+      "grounded": true,
+      "cited_slide": 4,
+      "citation_correct": true
+    },
+    {
+      "question": "What is a typical sign of overfitting?",
+      "expected_slide": 5,
+      "retrieved_slides": [
+        5,
+        1
+      ],
+      "source_hit": true,
+      "grounded": true,
+      "cited_slide": 5,
+      "citation_correct": true
+    },
+    {
+      "question": "How does L2 regularization change the training loss?",
+      "expected_slide": 5,
+      "retrieved_slides": [
+        5,
+        6,
+        4,
+        1
+      ],
+      "source_hit": true,
+      "grounded": true,
+      "cited_slide": 5,
+      "citation_correct": true
+    },
+    {
+      "question": "What can excessive regularization cause?",
+      "expected_slide": 5,
+      "retrieved_slides": [
+        5,
+        1,
+        4
+      ],
+      "source_hit": true,
+      "grounded": true,
+      "cited_slide": 5,
+      "citation_correct": true
+    },
+    {
+      "question": "Why should hyperparameters be chosen on a validation set?",
+      "expected_slide": 6,
+      "retrieved_slides": [
+        6,
+        5,
+        2
+      ],
+      "source_hit": true,
+      "grounded": true,
+      "cited_slide": 6,
+      "citation_correct": true
+    },
+    {
+      "question": "How do I compute precision and recall?",
+      "expected_slide": 6,
+      "retrieved_slides": [
+        6,
+        7
+      ],
+      "source_hit": true,
+      "grounded": true,
+      "cited_slide": 6,
+      "citation_correct": true
+    },
+    {
+      "question": "What is data leakage?",
+      "expected_slide": 6,
+      "retrieved_slides": [
+        6,
+        5
+      ],
+      "source_hit": true,
+      "grounded": true,
+      "cited_slide": 6,
+      "citation_correct": true
+    },
+    {
+      "question": "Why are nonlinear activation functions needed in a neural network?",
+      "expected_slide": 7,
+      "retrieved_slides": [
+        7,
+        1
+      ],
+      "source_hit": true,
+      "grounded": true,
+      "cited_slide": 7,
+      "citation_correct": true
+    },
+    {
+      "question": "What is ReLU of a negative number?",
+      "expected_slide": 7,
+      "retrieved_slides": [
+        7
+      ],
+      "source_hit": true,
+      "grounded": true,
+      "cited_slide": 7,
+      "citation_correct": true
+    },
+    {
+      "question": "What does backpropagation compute?",
+      "expected_slide": 7,
+      "retrieved_slides": [
+        7
+      ],
+      "source_hit": true,
+      "grounded": true,
+      "cited_slide": 7,
+      "citation_correct": true
+    }
+  ],
+  "off_material_detail": [
+    {
+      "query": "Who won the 2022 football World Cup?",
+      "declined": true,
+      "answer": "I could not find support for that in the uploaded material, so I will not answer from general knowledge. Try rephrasing with a term from your course, upload the"
+    },
+    {
+      "query": "Explain the political history of France in the nineteenth century.",
+      "declined": true,
+      "answer": "I could not find support for that in the uploaded material, so I will not answer from general knowledge. Try rephrasing with a term from your course, upload the"
+    },
+    {
+      "query": "What is the capital of Australia?",
+      "declined": true,
+      "answer": "I could not find support for that in the uploaded material, so I will not answer from general knowledge. Try rephrasing with a term from your course, upload the"
+    },
+    {
+      "query": "Give me a sourdough bread recipe with exact oven temperatures.",
+      "declined": true,
+      "answer": "I could not find support for that in the uploaded material, so I will not answer from general knowledge. Try rephrasing with a term from your course, upload the"
+    },
+    {
+      "query": "How do I file my income tax return in India?",
+      "declined": true,
+      "answer": "I could not find support for that in the uploaded material, so I will not answer from general knowledge. Try rephrasing with a term from your course, upload the"
+    },
+    {
+      "query": "What is the plot of the film Inception?",
+      "declined": true,
+      "answer": "I could not find support for that in the uploaded material, so I will not answer from general knowledge. Try rephrasing with a term from your course, upload the"
+    },
+    {
+      "query": "Which vitamin prevents scurvy?",
+      "declined": true,
+      "answer": "I could not find support for that in the uploaded material, so I will not answer from general knowledge. Try rephrasing with a term from your course, upload the"
+    },
+    {
+      "query": "How do I tune a guitar to open G?",
+      "declined": true,
+      "answer": "I could not find support for that in the uploaded material, so I will not answer from general knowledge. Try rephrasing with a term from your course, upload the"
+    }
+  ],
+  "question_novelty": {
+    "first_assessment": [
+      "For y_hat = w*x + b with w = 2, b = 1 and x = 3, calculate y_hat.",
+      "What kind of training examples does supervised learning use?",
+      "Which direction does gradient descent move parameters?",
+      "Which observation is a typical sign of overfitting?",
+      "Which task is regression?"
+    ],
+    "second_assessment": [
+      "A weight is 4, its gradient is 2, and the learning rate is 0.1. What is the next weight?",
+      "Two predictions have errors 1 and 3. What is their mean squared error?",
+      "What does generalization describe?",
+      "What is ReLU(-3)?",
+      "Which split should guide hyperparameter selection?"
+    ],
+    "repeated": 0,
+    "novelty_rate": 1.0
+  },
+  "notes": [
+    "answer_token_grounding is a lexical proxy, not a semantic faithfulness score.",
+    "refusal_accuracy uses an 8-query off-material probe set written by the team."
+  ]
+}

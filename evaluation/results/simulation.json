@@ -1,0 +1,237 @@
+{
+  "setup": {
+    "sessions": 5,
+    "questions_per_session": 3,
+    "profiles": [
+      "steady_improver",
+      "strong_student",
+      "struggling_student"
+    ]
+  },
+  "caveat": "Simulated students are stochastic answerers driven through the real API. Gains show learner-model responsiveness, not human learning. In offline mode the reviewed question bank is finite (18 items), so long runs end with the API reporting that no unseen verified questions remain; configuring GEMINI_API_KEY extends generation with verified items.",
+  "profiles": [
+    {
+      "profile": "steady_improver",
+      "sessions": 5,
+      "questions_asked": 15,
+      "question_repetition_rate": 0.0,
+      "sessions_completed": 5,
+      "bank_exhausted_at_session": null,
+      "mastery_history": [
+        {
+          "session": 1,
+          "score": 0.0,
+          "mean_mastery": 0.2462
+        },
+        {
+          "session": 2,
+          "score": 0.3333,
+          "mean_mastery": 0.2815
+        },
+        {
+          "session": 3,
+          "score": 0.6667,
+          "mean_mastery": 0.367
+        },
+        {
+          "session": 4,
+          "score": 0.6667,
+          "mean_mastery": 0.4274
+        },
+        {
+          "session": 5,
+          "score": 0.6667,
+          "mean_mastery": 0.4345
+        }
+      ],
+      "mastery_gain_mean": 0.1569,
+      "topics_with_evidence": 6,
+      "final_topics": [
+        {
+          "name": "Supervised Learning",
+          "mastery": 0.3784,
+          "evidence": 3
+        },
+        {
+          "name": "Linear Regression",
+          "mastery": 0.0921,
+          "evidence": 3
+        },
+        {
+          "name": "Gradient Descent",
+          "mastery": 0.1634,
+          "evidence": 3
+        },
+        {
+          "name": "Overfitting & Regularization",
+          "mastery": 0.915,
+          "evidence": 2
+        },
+        {
+          "name": "Model Evaluation",
+          "mastery": 0.915,
+          "evidence": 2
+        },
+        {
+          "name": "Neural Networks",
+          "mastery": 0.2773,
+          "evidence": 2
+        },
+        {
+          "name": "Course Orientation",
+          "mastery": 0.3,
+          "evidence": 0
+        }
+      ]
+    },
+    {
+      "profile": "strong_student",
+      "sessions": 5,
+      "questions_asked": 15,
+      "question_repetition_rate": 0.0,
+      "sessions_completed": 5,
+      "bank_exhausted_at_session": null,
+      "mastery_history": [
+        {
+          "session": 1,
+          "score": 1.0,
+          "mean_mastery": 0.443
+        },
+        {
+          "session": 2,
+          "score": 1.0,
+          "mean_mastery": 0.6084
+        },
+        {
+          "session": 3,
+          "score": 1.0,
+          "mean_mastery": 0.7057
+        },
+        {
+          "session": 4,
+          "score": 1.0,
+          "mean_mastery": 0.8039
+        },
+        {
+          "session": 5,
+          "score": 0.6667,
+          "mean_mastery": 0.8022
+        }
+      ],
+      "mastery_gain_mean": 0.5859,
+      "topics_with_evidence": 6,
+      "final_topics": [
+        {
+          "name": "Supervised Learning",
+          "mastery": 0.9814,
+          "evidence": 3
+        },
+        {
+          "name": "Linear Regression",
+          "mastery": 0.915,
+          "evidence": 2
+        },
+        {
+          "name": "Gradient Descent",
+          "mastery": 0.915,
+          "evidence": 2
+        },
+        {
+          "name": "Overfitting & Regularization",
+          "mastery": 0.915,
+          "evidence": 2
+        },
+        {
+          "name": "Model Evaluation",
+          "mastery": 0.6078,
+          "evidence": 3
+        },
+        {
+          "name": "Neural Networks",
+          "mastery": 0.9814,
+          "evidence": 3
+        },
+        {
+          "name": "Course Orientation",
+          "mastery": 0.3,
+          "evidence": 0
+        }
+      ]
+    },
+    {
+      "profile": "struggling_student",
+      "sessions": 5,
+      "questions_asked": 15,
+      "question_repetition_rate": 0.0,
+      "sessions_completed": 5,
+      "bank_exhausted_at_session": null,
+      "mastery_history": [
+        {
+          "session": 1,
+          "score": 0.0,
+          "mean_mastery": 0.2462
+        },
+        {
+          "session": 2,
+          "score": 0.0,
+          "mean_mastery": 0.2406
+        },
+        {
+          "session": 3,
+          "score": 1.0,
+          "mean_mastery": 0.406
+        },
+        {
+          "session": 4,
+          "score": 0.3333,
+          "mean_mastery": 0.3806
+        },
+        {
+          "session": 5,
+          "score": 0.3333,
+          "mean_mastery": 0.2966
+        }
+      ],
+      "mastery_gain_mean": -0.004,
+      "topics_with_evidence": 6,
+      "final_topics": [
+        {
+          "name": "Supervised Learning",
+          "mastery": 0.0921,
+          "evidence": 3
+        },
+        {
+          "name": "Linear Regression",
+          "mastery": 0.0921,
+          "evidence": 3
+        },
+        {
+          "name": "Gradient Descent",
+          "mastery": 0.915,
+          "evidence": 2
+        },
+        {
+          "name": "Overfitting & Regularization",
+          "mastery": 0.2773,
+          "evidence": 2
+        },
+        {
+          "name": "Model Evaluation",
+          "mastery": 0.2773,
+          "evidence": 2
+        },
+        {
+          "name": "Neural Networks",
+          "mastery": 0.1221,
+          "evidence": 3
+        },
+        {
+          "name": "Course Orientation",
+          "mastery": 0.3,
+          "evidence": 0
+        }
+      ]
+    }
+  ],
+  "question_repetition_rate_overall": 0.0
+}
