@@ -68,6 +68,7 @@ python -m evaluation.simulation --sessions 5     # simulated students across ses
 
 * `docs/ARCHITECTURE.md` — system design, ingestion, grounding method, learner model, roadmap
 * `docs/EVALUATION.md` — what was measured, with real numbers, and what was not
+* `docs/REQUIREMENTS.md` — item-by-item coverage register for the Track D brief, including gaps
 * `docs/DEMO.md` — 3–10 minute demo video script
 * `docs/API.md` — REST contract used by the frontend
 

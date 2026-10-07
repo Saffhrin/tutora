@@ -139,3 +139,7 @@ implemented — the diagnostic quiz is the intake path in this prototype.
   (flashcards/audio briefs), study-plan generation against an exam date.
 * Hindi explanations alongside English sources; audio (speech) tutoring sessions.
 * Multi-learner accounts, cohort analytics, teacher view.
+
+Two brief items are also deliberately unimplemented and tracked in
+`docs/REQUIREMENTS.md`: mastery updates triggered by conversation (4a) and the new-student
+intake conversation (4b). An explicit subtopic hierarchy (1c) is likewise outstanding.
