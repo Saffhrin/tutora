@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -81,6 +82,7 @@ def evaluate(k: int = 4) -> dict:
         body = answer["answer"]
         if answer["mode"] == "extractive" and "\n\n" in body:
             body = body.split("\n\n", 1)[1]
+        body = re.sub(r"\[[^\]]*\]", " ", body)  # drop citation markers: metadata, not claims
         answer_terms = {t for t in retrieval.tokenize(body) if len(t) > 3}
         if answer_terms:
             token_total += 1

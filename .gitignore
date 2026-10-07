@@ -8,3 +8,4 @@ data/
 *.pyc
 coverage/
 .DS_Store
+demo_assets/

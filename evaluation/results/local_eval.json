@@ -11,7 +11,7 @@
     "citation_location_accuracy": 1.0,
     "refusal_accuracy_off_material": 1.0,
     "citation_integrity_verbatim": 1.0,
-    "answer_token_grounding": 0.7832,
+    "answer_token_grounding": 1.0,
     "question_novelty_rate": 1.0
   },
   "in_material_detail": [
