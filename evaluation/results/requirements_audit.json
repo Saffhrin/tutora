@@ -1,0 +1,129 @@
+{
+  "summary": {
+    "pass": 12,
+    "partial": 6,
+    "fail": 6
+  },
+  "checks": [
+    {
+      "item": "1a ingest slides/textbook/video without preprocessing",
+      "status": "PARTIAL",
+      "evidence": "PPTX 7 units, PDF 6 units, TXT 4 units verified end-to-end; image/audio/video require GEMINI_API_KEY and were not executed"
+    },
+    {
+      "item": "1b exact origin per unit (page/slide/timestamp)",
+      "status": "PASS",
+      "evidence": "all PPTX units carry slide numbers=True, all PDF units carry page numbers=True; timestamp path needs a key"
+    },
+    {
+      "item": "1d figures/diagrams understood",
+      "status": "PARTIAL",
+      "evidence": "vision path wired to Gemini; without a key it fails loudly: \u201cThis file needs Gemini for visual understanding or transcription. Set GEMINI_API_KEY on th\u2026\u201d"
+    },
+    {
+      "item": "1c tag every unit to topics/concepts",
+      "status": "PASS",
+      "evidence": "7/7 seeded units tagged; uploads are tagged via db.match_topic keyword profiles"
+    },
+    {
+      "item": "1c subtopic hierarchy",
+      "status": "PARTIAL",
+      "evidence": "explicit parent/subtopic column present=False; subtopics collapse onto the parent concept instead of forming a tree"
+    },
+    {
+      "item": "2a cited excerpts at the exact page/slide/timestamp",
+      "status": "PASS",
+      "evidence": "17/17 in-material questions grounded, 17/17 first citations on the expected slide, 17/17 carry deep links"
+    },
+    {
+      "item": "1a upload endpoint ingests a real PDF",
+      "status": "PASS",
+      "evidence": "status=ready, units=6, kind=pdf"
+    },
+    {
+      "item": "2a original asset reopens at the cited page",
+      "status": "PASS",
+      "evidence": "GET /api/sources/src_48b6eb5425/file -> HTTP 200 (viewer appends #page=n / #t=n)"
+    },
+    {
+      "item": "2b decline queries the material does not cover",
+      "status": "PASS",
+      "evidence": "8/8 off-material queries declined with zero citations"
+    },
+    {
+      "item": "3a scoped quizzes tagged to topic/source/difficulty",
+      "status": "PASS",
+      "evidence": "5 questions, all tagged=True, kinds present=['mcq', 'numerical', 'short'], answer keys withheld from the response"
+    },
+    {
+      "item": "3b no repeated questions across assessments",
+      "status": "PASS",
+      "evidence": "0 repeated prompts across two 5-question assessments (overlap=0)"
+    },
+    {
+      "item": "3b question correctness verification",
+      "status": "PARTIAL",
+      "evidence": "reviewed bank items are human-keyed; generated items require a second independent call plus verbatim excerpt support, but that call uses the same provider (key present=False), i.e. same-model not cross-model"
+    },
+    {
+      "item": "3c cited feedback, weak topics, misconceptions",
+      "status": "PASS",
+      "evidence": "feedback has key+explanation+citation=True; weak_topics=4, mastery_changes=4, misconceptions=3"
+    },
+    {
+      "item": "4a mastery updates after quizzes",
+      "status": "PASS",
+      "evidence": "one submission moved 4 topic estimates (Supervised Learning: 0.3\u21920.0964, Linear Regression: 0.3\u21920.1268, Gradient Descent: 0.3\u21920.1268); BKT with evidence counts and idempotent re-submission"
+    },
+    {
+      "item": "4a mastery updates after conversation",
+      "status": "FAIL",
+      "evidence": "chat moved 0 topic estimates \u2014 conversation is deliberately not treated as knowledge evidence, so this part of the requirement is unmet"
+    },
+    {
+      "item": "4b new student with no history",
+      "status": "PARTIAL",
+      "evidence": "diagnostic quiz spans 5 topics (cold start works); intake conversation is not implemented"
+    },
+    {
+      "item": "5a standard evaluation framework executed",
+      "status": "FAIL",
+      "evidence": "RAGAS adapter exists but was never run (ragas not installed, no judge key); no DeepEval/TruLens integration"
+    },
+    {
+      "item": "5b faithfulness/relevancy/precision/recall",
+      "status": "PARTIAL",
+      "evidence": "local lexical substitutes: source_hit_at_k=1.0, grounded_rate_in_material=1.0, citation_location_accuracy=1.0, refusal_accuracy_off_material=1.0, citation_integrity_verbatim=1.0, answer_token_grounding=1.0, question_novelty_rate=1.0"
+    },
+    {
+      "item": "5c simulated profiles, gains, repetition rate",
+      "status": "PASS",
+      "evidence": "steady_improver=+0.157, strong_student=+0.586, struggling_student=-0.004; overall repetition rate=0.0"
+    },
+    {
+      "item": "6a visual course flow map",
+      "status": "PASS",
+      "evidence": "/map route present=True, prerequisite depth computed in frontend/src/pages/CourseMap.tsx"
+    },
+    {
+      "item": "6b revision material (flashcards/slides/audio briefs)",
+      "status": "FAIL",
+      "evidence": "no flashcard code found in backend/ or frontend/src"
+    },
+    {
+      "item": "6c study schedule from forgetting curves",
+      "status": "FAIL",
+      "evidence": "no forgetting curve code found in backend/ or frontend/src"
+    },
+    {
+      "item": "6d Hindi / mixed-language interaction",
+      "status": "FAIL",
+      "evidence": "no Hindi code found in backend/ or frontend/src"
+    },
+    {
+      "item": "6e audio-based tutoring",
+      "status": "FAIL",
+      "evidence": "no speech synthesis code found in backend/ or frontend/src"
+    }
+  ]
+}

@@ -6,6 +6,7 @@ copied from another project. Re-run with:
 
 ```bash
 python -m pytest -q                            # 20 offline tests
+python -m evaluation.audit                     # requirement-by-requirement audit of the live system
 python -m evaluation.run                       # grounding + retrieval metrics
 python -m evaluation.simulation --sessions 5   # personalization study
 ```
@@ -121,3 +122,5 @@ What this does and does not show:
   novelty detail
 * `evaluation/results/simulation.json` — per-profile session histories and final per-topic
   mastery
+* `evaluation/results/requirements_audit.json` — requirement coverage with observed evidence
+  (12 PASS · 6 PARTIAL · 6 FAIL)

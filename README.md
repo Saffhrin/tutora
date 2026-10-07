@@ -60,6 +60,7 @@ Upload those files through the Library page to show the ingestion workflow end t
 
 ```bash
 python -m pytest -q                              # 20 offline tests, no network
+python -m evaluation.audit                       # requirement-by-requirement audit (12 PASS / 6 PARTIAL / 6 FAIL)
 python -m evaluation.run                         # grounding/retrieval metrics
 python -m evaluation.simulation --sessions 5     # simulated students across sessions
 ```

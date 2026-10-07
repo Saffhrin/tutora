@@ -8,6 +8,10 @@ Honest mapping of every item in the Track D brief to this repository. Status mea
 * **Partial** — implemented for part of the requirement; the shortfall is stated.
 * **Missing** — not implemented; listed as roadmap.
 
+This register is machine-checked: `python -m evaluation.audit` exercises the running system and
+prints the same statuses with observed evidence (last run: **12 PASS · 6 PARTIAL · 6 FAIL**).
+The raw output is committed to `evaluation/results/requirements_audit.json`.
+
 ## 1. Multimodal knowledge base
 
 | Item | Status | Where / shortfall |
