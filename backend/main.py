@@ -285,6 +285,27 @@ def assessments() -> list[dict]:
     ]
 
 
+@app.get("/api/assessments/{assessment_id}/questions")
+def assessment_questions(assessment_id: str) -> dict:
+    """Re-serve a generated assessment so the UI can resume it. Answer keys stay hidden."""
+    if db.get_assessment(assessment_id) is None:
+        raise HTTPException(404, "Assessment not found")
+    return {
+        "id": assessment_id,
+        "notice": None,
+        "questions": [
+            {
+                "id": row["id"], "prompt": row["prompt"], "kind": row["kind"],
+                "options": json.loads(row["options"] or "[]"), "topic_id": row["topic_id"],
+                "topic_name": row["topic_name"] or "Uncategorised",
+                "difficulty": row["difficulty"], "origin": row["origin"],
+                "source": citation_for_unit(row["unit_id"]),
+            }
+            for row in db.assessment_questions(assessment_id)
+        ],
+    }
+
+
 @app.post("/api/assessments/{assessment_id}/submit")
 def submit_assessment(assessment_id: str, request: SubmitRequest) -> dict:
     assessment = db.get_assessment(assessment_id)
