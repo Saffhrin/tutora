@@ -81,6 +81,13 @@ const check = (name, ok) => {
     foreign.includes(`Something answered on port ${API_PORT}, but it is not the Tutora API`));
   check('foreign API: no blank page (navigation still there)', foreign.includes('Course map'));
 
+  // Another project's HTML page must also be reported, not mistaken for a dead API.
+  const html = await render(() => Promise.resolve({
+    ok: true, status: 200, json: () => Promise.reject(new SyntaxError('Unexpected token <')),
+  }));
+  check('non-JSON answer: still reported as not-Tutora',
+    html.includes(`Something answered on port ${API_PORT}, but it is not the Tutora API`));
+
   const healthy = await render(() => Promise.resolve({
     ok: true, status: 200, json: () => Promise.resolve(DASHBOARD),
   }));

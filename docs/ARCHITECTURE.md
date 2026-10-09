@@ -29,7 +29,9 @@
   backend.main` moves on when its port is taken unless `--strict-port` is given. Two guards
   keep a foreign process from being mistaken for Tutora: Vite probes `/api/health` at startup
   and the UI rejects any `/api/dashboard` payload that is not Tutora's shape, so the user is
-  told another project owns the port instead of seeing a blank page.
+  told another project owns the port instead of seeing a blank page. `.env` at the project
+  root is read by `backend/env.py` (ports, `GEMINI_API_KEY`, `TUTORA_DATA_DIR`), never
+  overriding a real environment variable.
 * **Model access**: `backend/provider.py` is a small server-side REST client for Gemini
   (`GEMINI_API_KEY`, `GEMINI_MODEL`, default `gemini-2.5-flash`). It is entirely optional;
   every code path has a deterministic offline fallback.

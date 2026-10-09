@@ -17,8 +17,9 @@ import argparse
 import os
 import socket
 import sys
-from pathlib import Path
 from typing import Iterator
+
+from .env import ENV_FILE_ENV, env_file_path, load_env_file
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_API_PORT = 8000
@@ -72,46 +73,6 @@ def env_port(name: str, default: int) -> int:
 def env_host(name: str, default: str = DEFAULT_HOST) -> str:
     load_env_file()
     return os.environ.get(name) or default
-
-
-_ENV_LOADED = False
-
-
-def env_file_path() -> Path:
-    """`TUTORA_ENV_FILE`, else the `.env` in the project root (next to package.json)."""
-    override = os.environ.get("TUTORA_ENV_FILE")
-    if override:
-        return Path(override)
-    return Path(__file__).resolve().parents[1] / ".env"
-
-
-def load_env_file(path: Path | None = None) -> dict[str, str]:
-    """Read `KEY=VALUE` lines from `.env` once, without overriding the real environment.
-
-    Without this, `TUTORA_API_PORT` in `.env` would only reach Vite: the backend and
-    `scripts/dev.sh` read the process environment. Process values always win, so
-    `TUTORA_API_PORT=8050 ./scripts/dev.sh` still beats the file.
-    """
-    global _ENV_LOADED
-    if _ENV_LOADED and path is None:
-        return {}
-    if path is None:
-        _ENV_LOADED = True
-        path = env_file_path()
-    if not path.is_file():
-        return {}
-    loaded: dict[str, str] = {}
-    for line in path.read_text(encoding="utf-8").splitlines():
-        entry = line.strip()
-        if not entry or entry.startswith("#") or "=" not in entry:
-            continue
-        key, _, raw = entry.partition("=")
-        key, value = key.strip(), raw.strip().strip("'\"")
-        if not key:
-            continue
-        loaded[key] = value
-        os.environ.setdefault(key, value)
-    return loaded
 
 
 def kind_env_names(kind: str) -> tuple[str, str]:
@@ -211,7 +172,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m backend.ports",
         description="Find a free port for the Tutora API or Vite dev server.",
-        epilog=f"{API_URL_ENV} is read by frontend/vite.config.ts, not here.",
+        epilog=f"{API_URL_ENV} is read by frontend/vite.config.ts, not here; "
+               f"{ENV_FILE_ENV} moves the .env file that ports are read from.",
     )
     parser.add_argument("--kind", choices=KINDS, default="api")
     parser.add_argument("--port", type=int, default=None,

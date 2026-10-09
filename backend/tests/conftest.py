@@ -9,6 +9,7 @@ sys.path.insert(0, str(ROOT))
 TMP = tempfile.mkdtemp(prefix="tutora-test-")
 os.environ["TUTORA_DATA_DIR"] = TMP
 os.environ.pop("GEMINI_API_KEY", None)  # tests must never call an external model
+os.environ["TUTORA_SKIP_ENV_FILE"] = "1"  # nor pick a key up from a developer .env
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

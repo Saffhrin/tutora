@@ -11,11 +11,11 @@ type State = { message: string };
 export default class ErrorBoundary extends Component<Props, State> {
   state: State = { message: '' };
 
-  static getDerivedStateFromError(error: Error): State {
-    return { message: error.message };
+  static getDerivedStateFromError(error: unknown): State {
+    return { message: error instanceof Error ? error.message : String(error) };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo) {
+  componentDidCatch(error: unknown, info: ErrorInfo) {
     console.error('Tutora: page failed to render', error, info.componentStack);
   }
 

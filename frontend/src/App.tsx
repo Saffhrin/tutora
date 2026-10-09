@@ -6,7 +6,7 @@ import LibraryPage from './pages/Library';
 import Tutor from './pages/Tutor';
 import Practice from './pages/Practice';
 import CourseMap from './pages/CourseMap';
-import { api, looksLikeDashboard, type DashboardData } from './api';
+import { looksLikeDashboard, type DashboardData } from './api';
 import ErrorBoundary from './components/ErrorBoundary';
 
 const NAV = [
@@ -27,15 +27,21 @@ export default function App() {
   const location = useLocation();
 
   const refresh = useCallback(() => {
-    api<DashboardData>('/dashboard')
-      .then((data) => {
-        // Something answered on this port, but a Tutora dashboard carries a learner,
-        // stats, topics and recommendations. If it does not, another project owns the
-        // port the proxy targets and we must say so instead of rendering foreign data.
-        const looksLikeTutora = looksLikeDashboard(data);
-        setStatus(looksLikeTutora
-          ? { online: true, provider: data.provider ?? null, foreign: false }
-          : { online: false, provider: null, foreign: true });
+    // A raw fetch rather than api(): when another project owns the port its answer may be
+    // HTML or any other shape, and that has to be reported as "not Tutora" instead of
+    // being mistaken for a dead API (which is what a failed JSON parse would look like).
+    fetch('/api/dashboard')
+      .then(async (response) => {
+        if (!response.ok) {
+          setStatus({ online: false, provider: null, foreign: false });
+          return;
+        }
+        const payload = await response.json().catch(() => null);
+        if (looksLikeDashboard(payload)) {
+          setStatus({ online: true, provider: payload.provider ?? null, foreign: false });
+        } else {
+          setStatus({ online: false, provider: null, foreign: true });
+        }
       })
       .catch(() => setStatus({ online: false, provider: null, foreign: false }));
   }, []);

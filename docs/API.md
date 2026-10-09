@@ -24,7 +24,7 @@ proxies `/api` to the API port, so the UI always talks to this backend, never th
 - `GET /assessments`: `[{id,created_at,completed,score?,question_count}]`.
 - `GET /assessments/{id}/questions`: re-serves a generated assessment (same shape as creation, answer keys still hidden) so the UI can resume after a reload.
 - `GET /health`: `{status:'ok'}`. The Vite dev server probes this at startup: if the proxy target
-  answers `/api/*` but not this shape, it warns that another project owns the port, and the UI shows
+  answers `/api/*` but not this shape (an HTML page or foreign JSON both count), it warns that another project owns the port, and the UI shows
   *“Something answered on port N, but it is not the Tutora API”* instead of foreign data.
 
 ## Extraction module contract (Python)

@@ -22,10 +22,21 @@ function asFlag(value: string | undefined) {
 function portOf(url: string, fallback: number) {
   try {
     const parsed = new URL(url);
-    return asPort(parsed.port, parsed.protocol === 'https:' ? 443 : fallback);
+    // A URL without an explicit port still has one: 80 for http, 443 for https.
+    return asPort(parsed.port, parsed.protocol === 'https:' ? 443 : 80);
   } catch {
     return fallback;
   }
+}
+
+/**
+ * The proxy rewrites `/api/<x>` onto the target, so the health probe has to follow the
+ * same rule: with a target that has a path, `/api/x` becomes `<target>/x`.
+ */
+function healthUrl(target: string) {
+  const base = target.endsWith('/') ? target : `${target}/`;
+  const hasPath = new URL(base).pathname.replace(/\/$/, '') !== '';
+  return new URL(hasPath ? 'health' : 'api/health', base).toString();
 }
 
 /**
@@ -37,7 +48,16 @@ function apiHealthCheck(target: string): Plugin {
     name: 'tutora-api-health',
     apply: 'serve',
     configureServer() {
-      const url = new URL('/api/health', target).toString();
+      let url: string;
+      try {
+        url = healthUrl(target);
+      } catch {
+        console.warn(
+          `\n  ⚠  TUTORA_API_URL (${target}) is not a URL the dev server can probe.` +
+          `\n     /api is still proxied to it, but check the value.\n`,
+        );
+        return;
+      }
       const signal = typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(2000) : undefined;
       fetch(url, signal ? { signal } : undefined)
         .then(async (response) => {

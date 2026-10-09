@@ -12,6 +12,10 @@ from urllib.parse import urlparse
 
 import httpx
 
+from .env import load_env_file
+
+load_env_file()  # GEMINI_API_KEY / GEMINI_MODEL may come from the project .env
+
 
 API_ROOT = "https://generativelanguage.googleapis.com/v1beta"
 UPLOAD_ROOT = "https://generativelanguage.googleapis.com/upload/v1beta/files"

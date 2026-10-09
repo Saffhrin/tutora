@@ -28,7 +28,11 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     const detail = body?.detail;
     throw new Error(typeof detail === 'string' ? detail : Array.isArray(detail) ? detail.map((item: { msg?: string }) => item.msg).join('; ') : body?.error || `Request failed (${response.status}). Please try again.`);
   }
-  return response.json();
+  try {
+    return await response.json();
+  } catch {
+    throw new Error('The API answered with something that is not JSON — another project may be using this port. See the note at the top of the page.');
+  }
 }
 export const post = <T>(path: string, body: unknown) => api<T>(path, { method: 'POST', body: JSON.stringify(body) });
 export const percent = (value: number) => `${Math.round(value * 100)}%`;

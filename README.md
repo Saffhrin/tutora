@@ -62,8 +62,10 @@ npm run dev        # http://localhost:5173, proxying /api to the API port
 Nothing has to be stopped by hand: both servers look for a free port before binding.
 
 * `python -m backend.main` (and `./scripts/dev.sh`) skip a busy API port and log
-  `8000 is already in use (another project?), using 8001 instead`. The UI proxy is
-  told the same port, so citations and quizzes keep working.
+  `8000 is already in use (another project?), using 8001 instead`. `./scripts/dev.sh`
+  passes that port to Vite, so the UI proxy follows the API. If you start the two halves
+  yourself, set the same value for both: `TUTORA_API_PORT=8001 npm run dev` after the API
+  prints its port, otherwise the UI keeps proxying 8000 (to the other project).
 * If 5173 is taken, Vite says `Port 5173 is in use, trying another one...` and serves
   the app on the next free port — **open the URL Vite prints**, not the one you expected.
 * Pin your own ports with `TUTORA_API_PORT=8050 TUTORA_WEB_PORT=5190 ./scripts/dev.sh`
@@ -76,12 +78,16 @@ Nothing has to be stopped by hand: both servers look for a free port before bind
   * *“The Tutora API is not reachable on port N”* — nothing is listening there: start
     the API with `python -m backend.main`.
   * *“Something answered on port N, but it is not the Tutora API”* — the other project
-    owns that port and was answering the proxy. Stop it, or run `./scripts/dev.sh`.
-    Vite prints the same warning at startup after checking `/api/health`.
+    owns that port and was answering the proxy (any answer counts, including an HTML page
+    or a JSON body of the wrong shape). Stop it, or run `./scripts/dev.sh`. Vite prints
+    the same warning at startup after probing `/api/health`.
 
 Optional: copy `.env.example` to `.env` and set `GEMINI_API_KEY` to enable image/figure
 understanding, audio & video transcription, AI question generation and written tutor prose.
-Without a key everything still runs, in offline extractive mode.
+Without a key everything still runs, in offline extractive mode. The backend reads that file
+itself (`backend/env.py`: `GEMINI_API_KEY`, `GEMINI_MODEL`, `TUTORA_DATA_DIR`, the ports), and
+so does Vite; a value already set in the real environment always wins, and
+`TUTORA_SKIP_ENV_FILE=1` ignores the file.
 
 ## Demo material
 
