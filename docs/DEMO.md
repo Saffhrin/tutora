@@ -3,10 +3,15 @@
 Record at 1440×900 with the backend and frontend running. Prepare before recording:
 
 ```bash
-uvicorn backend.main:app --port 8000          # terminal 1
-npm run dev                                    # terminal 2
+./scripts/dev.sh                               # API + UI, both on free ports
+# or, two terminals:
+python -m backend.main                          # API on 8000, or the next free port
+npm run dev                                     # UI on 5173, or the next free port
 python -m scripts.make_demo_assets             # demo_assets/ ready for upload
 ```
+
+Read the URLs both servers print: if another project already owns 8000/5173, Tutora
+moves to the next free port (`./scripts/dev.sh --dry-run` shows the choice in advance).
 
 ## 0:00–0:40 — Problem and promise
 

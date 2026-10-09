@@ -102,7 +102,9 @@ def test_cli_prints_the_port_for_dev_sh(monkeypatch, capsys):
         sock.close()
     captured = capsys.readouterr()
     assert captured.out.strip() == str(busy + 1)
-    assert "already in use" in captured.err  # the reason is on stderr, never stdout
+    # the reason is on stderr, never stdout, and it names the port that was taken
+    assert f"using 127.0.0.1:{busy + 1} instead" in captured.err
+    assert f"127.0.0.1:{busy} is already in use" in captured.err
 
 
 def test_cli_check_reports_occupancy():

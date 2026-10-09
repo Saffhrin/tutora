@@ -23,6 +23,7 @@ material does not cover are refused instead of guessed.**
 | Learner model (Bayesian knowledge tracing per topic) | Works | `backend/learning.py` |
 | Cold start (diagnostic quiz across all topics) | Works | Dashboard button → `POST /api/assessments {diagnostic:true}` |
 | Dashboard, library viewer, tutor, practice, course map UI | Works | `frontend/` |
+| Runs beside another local project (free-port discovery for API and UI) | Works (`./scripts/dev.sh`, `python -m backend.main`) | `backend/ports.py`, `frontend/vite.config.ts` |
 | Evaluation harness (local metrics + optional RAGAS adapter) | Works; measured numbers in `docs/EVALUATION.md` | `evaluation/` |
 
 Deliberately **not** claimed: RAGAS/DeepEval/TruLens scores (no judge key was available in
@@ -33,16 +34,43 @@ audio tutoring sessions, and multi-language explanation (roadmap items, see
 ## Quick start
 
 ```bash
+# One command: resolves two free ports, starts the API and the UI, prints both URLs.
+./scripts/dev.sh
+#   Tutora API -> http://127.0.0.1:8001
+#   Tutora UI  -> http://127.0.0.1:5174
+#   (8000/8001, 5173/5174 … when those are already taken by another project)
+```
+
+Or run the two halves yourself:
+
+```bash
 # 1. backend (Python 3.11+)
 python -m venv .venv && source .venv/bin/activate
 pip install -r backend/requirements.txt
-uvicorn backend.main:app --reload --port 8000
+python -m backend.main      # API on 8000, or the next free port
 # On first start Tutora seeds an original sample course (Introduction to ML, 7 slides).
 
 # 2. frontend
 npm install
-npm run dev        # http://localhost:5173  (proxies /api to :8000)
+npm run dev        # http://localhost:5173, proxying /api to the API port
 ```
+
+### Another project already uses 8000 or 5173
+
+Nothing has to be stopped by hand: both servers look for a free port before binding.
+
+* `python -m backend.main` (and `./scripts/dev.sh`) skip a busy API port and log
+  `8000 is already in use (another project?), using 8001 instead`. The UI proxy is
+  told the same port, so citations and quizzes keep working.
+* If 5173 is taken, Vite says `Port 5173 is in use, trying another one...` and serves
+  the app on the next free port — **open the URL Vite prints**, not the one you expected.
+* Pin your own ports with `TUTORA_API_PORT=8050 TUTORA_WEB_PORT=5190 ./scripts/dev.sh`
+  (or in `.env`), point the UI at a different API with `TUTORA_API_URL`, and refuse
+  moving with `python -m backend.main --strict-port` / `TUTORA_STRICT_PORT=1`.
+* `./scripts/dev.sh --dry-run` prints the ports it would use and starts nothing;
+  `python -m backend.ports --check 8000` reports `free` / `in use`.
+* A red banner *“The Tutora API is not reachable on port N”* means the API is not
+  listening on the port the UI proxies to: start it with `python -m backend.main`.
 
 Optional: copy `.env.example` to `.env` and set `GEMINI_API_KEY` to enable image/figure
 understanding, audio & video transcription, AI question generation and written tutor prose.
@@ -59,7 +87,7 @@ Upload those files through the Library page to show the ingestion workflow end t
 ## Tests, evaluation and simulation
 
 ```bash
-python -m pytest -q                              # 20 offline tests, no network
+python -m pytest -q                              # offline tests, no network
 python -m evaluation.audit                       # requirement-by-requirement audit (12 PASS / 6 PARTIAL / 6 FAIL)
 python -m evaluation.run                         # grounding/retrieval metrics
 python -m evaluation.simulation --sessions 5     # simulated students across sessions

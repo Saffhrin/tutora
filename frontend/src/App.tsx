@@ -63,8 +63,8 @@ export default function App() {
       <main>
         {!status.online && (
           <div className="banner warn">
-            The Tutora API is not reachable on port {__TUTORA_API_PORT__}. Start it with{' '}
-            <code>python -m backend.main</code> (it skips to a free port automatically) or{' '}
+            The Tutora API is not reachable on port {import.meta.env.TUTORA_API_PORT ?? '8000'}. Start
+            it with <code>python -m backend.main</code> (it skips to a free port automatically) or{' '}
             <code>./scripts/dev.sh</code> for API and UI together.
           </div>
         )}

@@ -170,12 +170,11 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if free else 1
 
     try:
-        if args.port is not None:
-            wanted = args.port
-            port, moved, host = resolve(args.kind, preferred=wanted, host=args.host, strict=args.strict)
-        else:
-            port, moved, host = resolve(args.kind, host=args.host, strict=args.strict)
-            wanted = port
+        # `wanted` is the *preference* (env or --port) so the move notice names the
+        # port that was actually taken, not the replacement.
+        wanted = args.port if args.port is not None else env_port(
+            kind_env_names(args.kind)[0], default_port(args.kind))
+        port, moved, host = resolve(args.kind, preferred=wanted, host=args.host, strict=args.strict)
     except (ValueError, PortUnavailable) as error:
         print(f"Tutora: {error}", file=sys.stderr)
         return 2

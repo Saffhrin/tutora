@@ -2,6 +2,11 @@
 
 Base `/api`. JSON unless noted. Single local learner; no authentication in MVP.
 
+Local ports are configurable and conflict-tolerant: the API prefers `TUTORA_API_PORT` (8000)
+and the Vite dev server `TUTORA_WEB_PORT` (5173), each moving to the next free port when a
+different project already listens there (`backend/ports.py`, `scripts/dev.sh`). The dev server
+proxies `/api` to the API port, so the UI always talks to this backend, never the other one.
+
 - `GET /dashboard`: `{learner: {name}, stats: {sources, units, topics, assessments}, topics: Topic[], recent_sessions: [], recommendations: [{topic_id,title,reason}], provider: {enabled,model}, disclaimer}`.
 - Topic: `{id, name, description, prerequisites: string[], mastery: number (0..1), evidence_count: number}`.
 - `GET /sources`: Source[]. Source: `{id,title,kind: 'text'|'pdf'|'slides'|'video'|'image',status:'ready'|'processing'|'failed',unit_count,created_at,error?}`.

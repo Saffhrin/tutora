@@ -28,8 +28,9 @@ export default defineConfig(({ mode }): UserConfig => {
   return {
     root: uiRoot,
     plugins: [react()],
-    // Used by the "API is not reachable" banner so it names the right port.
-    define: { __TUTORA_API_PORT__: JSON.stringify(String(apiPort)) },
+    // Used by the "API is not reachable" banner so it names the right port. Defined on
+    // import.meta.env (not a bare identifier) because Vite replaces those in dev too.
+    define: { 'import.meta.env.TUTORA_API_PORT': JSON.stringify(String(apiPort)) },
     server: {
       port: webPort,
       // Vite already takes the next free port when this one is busy; say so explicitly
