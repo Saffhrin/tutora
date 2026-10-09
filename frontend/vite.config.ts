@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv, type UserConfig } from 'vite';
+import { defineConfig, loadEnv, type Plugin, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
 
@@ -14,6 +14,54 @@ function asPort(value: string | undefined, fallback: number) {
   return Number.isInteger(port) && port > 0 && port <= 65535 ? port : fallback;
 }
 
+/** "0", "false", "no", "off" and "" all mean off — "0" is a truthy string in JS. */
+function asFlag(value: string | undefined) {
+  return value != null && !['', '0', 'false', 'no', 'off'].includes(value.trim().toLowerCase());
+}
+
+function portOf(url: string, fallback: number) {
+  try {
+    const parsed = new URL(url);
+    return asPort(parsed.port, parsed.protocol === 'https:' ? 443 : fallback);
+  } catch {
+    return fallback;
+  }
+}
+
+/**
+ * Say out loud what /api points at. Another project listening on the default port
+ * would otherwise answer the proxy silently and the UI would show foreign data.
+ */
+function apiHealthCheck(target: string): Plugin {
+  return {
+    name: 'tutora-api-health',
+    apply: 'serve',
+    configureServer() {
+      const url = new URL('/api/health', target).toString();
+      const signal = typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(2000) : undefined;
+      fetch(url, signal ? { signal } : undefined)
+        .then(async (response) => {
+          const body = await response.json().catch(() => null);
+          if (response.ok && body?.status === 'ok') {
+            console.log(`  ➜  Tutora API:  ${target}  (health ok, proxying /api here)`);
+            return;
+          }
+          console.warn(
+            `\n  ⚠  ${target} answered /api/health, but not like the Tutora API.` +
+            `\n     Another project probably owns that port: stop it, or set TUTORA_API_PORT` +
+            `\n     to the port this API really listens on (./scripts/dev.sh picks free ports).\n`,
+          );
+        })
+        .catch(() => {
+          console.warn(
+            `\n  ⚠  No Tutora API on ${target} yet. Start it with: python -m backend.main` +
+            `\n     (it skips busy ports — if it moves, set TUTORA_API_PORT to the port it prints).\n`,
+          );
+        });
+    },
+  };
+}
+
 export default defineConfig(({ mode }): UserConfig => {
   const env = loadEnv(mode, projectRoot, '');
   const read = (...names: string[]) =>
@@ -21,21 +69,24 @@ export default defineConfig(({ mode }): UserConfig => {
 
   // Another project on 8000 must not break the page: scripts/dev.sh passes the free
   // API port it found, and an explicit TUTORA_API_URL wins over the port entirely.
-  const apiPort = asPort(read('TUTORA_API_PORT'), DEFAULT_API_PORT);
-  const apiTarget = read('TUTORA_API_URL') ?? `http://${DEFAULT_HOST}:${apiPort}`;
+  const apiUrl = read('TUTORA_API_URL');
+  const apiPort = apiUrl
+    ? portOf(apiUrl, DEFAULT_API_PORT)
+    : asPort(read('TUTORA_API_PORT'), DEFAULT_API_PORT);
+  const apiTarget = apiUrl ?? `http://${DEFAULT_HOST}:${apiPort}`;
   const webPort = asPort(read('TUTORA_WEB_PORT', 'PORT'), DEFAULT_WEB_PORT);
 
   return {
     root: uiRoot,
-    plugins: [react()],
-    // Used by the "API is not reachable" banner so it names the right port. Defined on
-    // import.meta.env (not a bare identifier) because Vite replaces those in dev too.
+    plugins: [react(), apiHealthCheck(apiTarget)],
+    // Used by the "API is not reachable" banner so it names the port /api really goes to.
+    // Defined on import.meta.env (not a bare identifier) because Vite replaces those in dev.
     define: { 'import.meta.env.TUTORA_API_PORT': JSON.stringify(String(apiPort)) },
     server: {
       port: webPort,
       // Vite already takes the next free port when this one is busy; say so explicitly
       // so a second project on 5173 cannot stop the dev server from starting.
-      strictPort: Boolean(read('TUTORA_STRICT_PORT')),
+      strictPort: asFlag(read('TUTORA_STRICT_PORT')),
       proxy: { '/api': apiTarget },
     },
     preview: {

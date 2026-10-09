@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { NavLink, Route, Routes, useNavigate } from 'react-router-dom';
+import { NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { BookOpen, GraduationCap, LayoutDashboard, Library, Network, Sparkles, WifiOff } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import LibraryPage from './pages/Library';
 import Tutor from './pages/Tutor';
 import Practice from './pages/Practice';
 import CourseMap from './pages/CourseMap';
-import { api, type DashboardData } from './api';
+import { api, looksLikeDashboard, type DashboardData } from './api';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -16,16 +17,27 @@ const NAV = [
   { to: '/map', label: 'Course map', icon: Network, end: false },
 ];
 
-export type Status = { online: boolean; provider: DashboardData['provider'] | null };
+const API_PORT = import.meta.env.TUTORA_API_PORT ?? '8000';
+
+export type Status = { online: boolean; provider: DashboardData['provider'] | null; foreign: boolean };
 
 export default function App() {
-  const [status, setStatus] = useState<Status>({ online: true, provider: null });
+  const [status, setStatus] = useState<Status>({ online: true, provider: null, foreign: false });
   const navigate = useNavigate();
+  const location = useLocation();
 
   const refresh = useCallback(() => {
     api<DashboardData>('/dashboard')
-      .then((data) => setStatus({ online: true, provider: data.provider }))
-      .catch(() => setStatus((current) => ({ ...current, online: false })));
+      .then((data) => {
+        // Something answered on this port, but a Tutora dashboard carries a learner,
+        // stats, topics and recommendations. If it does not, another project owns the
+        // port the proxy targets and we must say so instead of rendering foreign data.
+        const looksLikeTutora = looksLikeDashboard(data);
+        setStatus(looksLikeTutora
+          ? { online: true, provider: data.provider ?? null, foreign: false }
+          : { online: false, provider: null, foreign: true });
+      })
+      .catch(() => setStatus({ online: false, provider: null, foreign: false }));
   }, []);
 
   useEffect(() => {
@@ -63,18 +75,30 @@ export default function App() {
       <main>
         {!status.online && (
           <div className="banner warn">
-            The Tutora API is not reachable on port {import.meta.env.TUTORA_API_PORT ?? '8000'}. Start
-            it with <code>python -m backend.main</code> (it skips to a free port automatically) or{' '}
-            <code>./scripts/dev.sh</code> for API and UI together.
+            {status.foreign ? (
+              <>
+                Something answered on port {API_PORT}, but it is not the Tutora API — another project
+                is probably using that port. Stop it, or start Tutora with{' '}
+                <code>./scripts/dev.sh</code>, which picks free ports for both servers.
+              </>
+            ) : (
+              <>
+                The Tutora API is not reachable on port {API_PORT}. Start it with{' '}
+                <code>python -m backend.main</code> (it skips to a free port automatically) or{' '}
+                <code>./scripts/dev.sh</code> for API and UI together.
+              </>
+            )}
           </div>
         )}
-        <Routes>
-          <Route path="/" element={<Dashboard onChanged={refresh} />} />
-          <Route path="/library" element={<LibraryPage onChanged={refresh} />} />
-          <Route path="/tutor" element={<Tutor />} />
-          <Route path="/practice" element={<Practice onChanged={refresh} />} />
-          <Route path="/map" element={<CourseMap />} />
-        </Routes>
+        <ErrorBoundary key={location.pathname}>
+          <Routes>
+            <Route path="/" element={<Dashboard onChanged={refresh} />} />
+            <Route path="/library" element={<LibraryPage onChanged={refresh} />} />
+            <Route path="/tutor" element={<Tutor />} />
+            <Route path="/practice" element={<Practice onChanged={refresh} />} />
+            <Route path="/map" element={<CourseMap />} />
+          </Routes>
+        </ErrorBoundary>
       </main>
     </div>
   );

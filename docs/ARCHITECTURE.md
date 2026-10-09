@@ -23,10 +23,13 @@
 * **Frontend**: React + TypeScript + Vite SPA, five pages, no UI framework — the design is
   hand-written CSS (`frontend/src/styles.css`).
 * **Local ports**: `backend/ports.py` finds a free port for the API and the dev server
-  (`TUTORA_API_PORT` / `TUTORA_WEB_PORT`, defaults 8000/5173), so a second project on the
-  same machine cannot block a start. `scripts/dev.sh` resolves both ports once and hands the
-  API port to Vite, which proxies `/api` to it; `python -m backend.main` moves on when its
-  port is taken unless `--strict-port` is given.
+  (`TUTORA_API_PORT` / `TUTORA_WEB_PORT`, defaults 8000/5173, `.env` or environment), so a
+  second project on the same machine cannot block a start. `scripts/dev.sh` resolves both
+  ports once and hands the API port to Vite, which proxies `/api` to it; `python -m
+  backend.main` moves on when its port is taken unless `--strict-port` is given. Two guards
+  keep a foreign process from being mistaken for Tutora: Vite probes `/api/health` at startup
+  and the UI rejects any `/api/dashboard` payload that is not Tutora's shape, so the user is
+  told another project owns the port instead of seeing a blank page.
 * **Model access**: `backend/provider.py` is a small server-side REST client for Gemini
   (`GEMINI_API_KEY`, `GEMINI_MODEL`, default `gemini-2.5-flash`). It is entirely optional;
   every code path has a deterministic offline fallback.

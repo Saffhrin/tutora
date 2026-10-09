@@ -55,6 +55,8 @@ npm install
 npm run dev        # http://localhost:5173, proxying /api to the API port
 ```
 
+(On Windows use the two-terminal path above, or `scripts/dev.sh` from Git Bash.)
+
 ### Another project already uses 8000 or 5173
 
 Nothing has to be stopped by hand: both servers look for a free port before binding.
@@ -65,12 +67,17 @@ Nothing has to be stopped by hand: both servers look for a free port before bind
 * If 5173 is taken, Vite says `Port 5173 is in use, trying another one...` and serves
   the app on the next free port — **open the URL Vite prints**, not the one you expected.
 * Pin your own ports with `TUTORA_API_PORT=8050 TUTORA_WEB_PORT=5190 ./scripts/dev.sh`
-  (or in `.env`), point the UI at a different API with `TUTORA_API_URL`, and refuse
-  moving with `python -m backend.main --strict-port` / `TUTORA_STRICT_PORT=1`.
+  (or in `.env`, which the backend, `scripts/dev.sh` and Vite all read), point the UI at a
+  different API with `TUTORA_API_URL`, and refuse moving with
+  `python -m backend.main --strict-port` / `TUTORA_STRICT_PORT=1`.
 * `./scripts/dev.sh --dry-run` prints the ports it would use and starts nothing;
   `python -m backend.ports --check 8000` reports `free` / `in use`.
-* A red banner *“The Tutora API is not reachable on port N”* means the API is not
-  listening on the port the UI proxies to: start it with `python -m backend.main`.
+* Two different warnings can appear, and they mean different things:
+  * *“The Tutora API is not reachable on port N”* — nothing is listening there: start
+    the API with `python -m backend.main`.
+  * *“Something answered on port N, but it is not the Tutora API”* — the other project
+    owns that port and was answering the proxy. Stop it, or run `./scripts/dev.sh`.
+    Vite prints the same warning at startup after checking `/api/health`.
 
 Optional: copy `.env.example` to `.env` and set `GEMINI_API_KEY` to enable image/figure
 understanding, audio & video transcription, AI question generation and written tutor prose.
@@ -88,6 +95,7 @@ Upload those files through the Library page to show the ingestion workflow end t
 
 ```bash
 python -m pytest -q                              # offline tests, no network
+npm run test:ui                                  # renders the UI in jsdom: API down, foreign API, healthy API
 python -m evaluation.audit                       # requirement-by-requirement audit (12 PASS / 6 PARTIAL / 6 FAIL)
 python -m evaluation.run                         # grounding/retrieval metrics
 python -m evaluation.simulation --sessions 5     # simulated students across sessions

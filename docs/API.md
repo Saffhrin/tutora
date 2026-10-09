@@ -23,7 +23,9 @@ proxies `/api` to the API port, so the UI always talks to this backend, never th
 - `POST /assessments/{id}/submit`: `{answers:{[questionId]:string}}` -> `{id,score,correct,total,feedback:[{question_id,prompt,student_answer,correct,expected_answer,explanation,citation,topic_name}],weak_topics:[{id,name,mastery}],mastery_changes:[{topic_id,name,before,after}],misconceptions:string[]}`. score 0..1. Submission is idempotent.
 - `GET /assessments`: `[{id,created_at,completed,score?,question_count}]`.
 - `GET /assessments/{id}/questions`: re-serves a generated assessment (same shape as creation, answer keys still hidden) so the UI can resume after a reload.
-- `GET /health`: `{status:'ok'}`.
+- `GET /health`: `{status:'ok'}`. The Vite dev server probes this at startup: if the proxy target
+  answers `/api/*` but not this shape, it warns that another project owns the port, and the UI shows
+  *“Something answered on port N, but it is not the Tutora API”* instead of foreign data.
 
 ## Extraction module contract (Python)
 

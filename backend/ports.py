@@ -17,6 +17,7 @@ import argparse
 import os
 import socket
 import sys
+from pathlib import Path
 from typing import Iterator
 
 DEFAULT_HOST = "127.0.0.1"
@@ -37,25 +38,80 @@ class PortUnavailable(RuntimeError):
     """No free port could be found for the requested host/range."""
 
 
-def parse_port(value: str | int | None, *, name: str, default: int) -> int:
-    """Interpret a port from env/CLI, refusing anything that is not a port."""
+def parse_port(value: str | int | float | None, *, name: str, default: int) -> int:
+    """Interpret a port from env/CLI, refusing anything that is not a real port.
+
+    Port 0 is rejected on purpose: the OS reads it as "pick any free port", but
+    Tutora has to know the number it prints, proxies to and hands to uvicorn.
+    """
     if value is None or value == "":
         return default
-    try:
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be a whole number between 1 and 65535, got {value!r}.")
+    if isinstance(value, int):
+        port = value
+    elif isinstance(value, float):
+        if not value.is_integer():
+            raise ValueError(f"{name} must be a whole number between 1 and 65535, got {value!r}.")
         port = int(value)
-    except (TypeError, ValueError):
-        raise ValueError(f"{name} must be a whole number between 0 and 65535, got {value!r}.") from None
-    if not 0 <= port <= 65535:
-        raise ValueError(f"{name} must be between 0 and 65535, got {port}.")
+    else:
+        text = str(value).strip()
+        if not text.isdigit():
+            raise ValueError(f"{name} must be a whole number between 1 and 65535, got {value!r}.")
+        port = int(text)
+    if not 1 <= port <= 65535:
+        raise ValueError(f"{name} must be between 1 and 65535, got {port}.")
     return port
 
 
 def env_port(name: str, default: int) -> int:
+    load_env_file()
     return parse_port(os.environ.get(name), name=name, default=default)
 
 
 def env_host(name: str, default: str = DEFAULT_HOST) -> str:
+    load_env_file()
     return os.environ.get(name) or default
+
+
+_ENV_LOADED = False
+
+
+def env_file_path() -> Path:
+    """`TUTORA_ENV_FILE`, else the `.env` in the project root (next to package.json)."""
+    override = os.environ.get("TUTORA_ENV_FILE")
+    if override:
+        return Path(override)
+    return Path(__file__).resolve().parents[1] / ".env"
+
+
+def load_env_file(path: Path | None = None) -> dict[str, str]:
+    """Read `KEY=VALUE` lines from `.env` once, without overriding the real environment.
+
+    Without this, `TUTORA_API_PORT` in `.env` would only reach Vite: the backend and
+    `scripts/dev.sh` read the process environment. Process values always win, so
+    `TUTORA_API_PORT=8050 ./scripts/dev.sh` still beats the file.
+    """
+    global _ENV_LOADED
+    if _ENV_LOADED and path is None:
+        return {}
+    if path is None:
+        _ENV_LOADED = True
+        path = env_file_path()
+    if not path.is_file():
+        return {}
+    loaded: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        entry = line.strip()
+        if not entry or entry.startswith("#") or "=" not in entry:
+            continue
+        key, _, raw = entry.partition("=")
+        key, value = key.strip(), raw.strip().strip("'\"")
+        if not key:
+            continue
+        loaded[key] = value
+        os.environ.setdefault(key, value)
+    return loaded
 
 
 def kind_env_names(kind: str) -> tuple[str, str]:
@@ -83,8 +139,9 @@ def is_port_free(port: int, host: str = DEFAULT_HOST) -> bool:
     a process still listening (on this host or on ``0.0.0.0``) is detected.
     A port taken on some unrelated interface only is not reported here.
     """
-    if port == 0:  # 0 means "any free port" to the OS, so it can never be taken
-        return True
+    if port is None:
+        raise ValueError("a port number is required.")
+    port = parse_port(port, name="port", default=0)  # 0 is rejected: it must be a real port
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
         probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
@@ -154,6 +211,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m backend.ports",
         description="Find a free port for the Tutora API or Vite dev server.",
+        epilog=f"{API_URL_ENV} is read by frontend/vite.config.ts, not here.",
     )
     parser.add_argument("--kind", choices=KINDS, default="api")
     parser.add_argument("--port", type=int, default=None,
@@ -165,7 +223,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.check is not None:
-        free = is_port_free(args.check, args.host or DEFAULT_HOST)
+        try:
+            free = is_port_free(args.check, args.host or DEFAULT_HOST)
+        except ValueError as error:
+            print(f"Tutora: {error}", file=sys.stderr)
+            return 2
         print("free" if free else "in use")
         return 0 if free else 1
 

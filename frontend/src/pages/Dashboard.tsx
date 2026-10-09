@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, ClipboardCheck, FileStack, Layers, Play, Target } from 'lucide-react';
-import { api, post, percent, type AssessmentSummary, type DashboardData, type Topic } from '../api';
+import { api, looksLikeDashboard, post, percent, type AssessmentSummary, type DashboardData, type Topic } from '../api';
 import Mastery from '../components/Mastery';
 
 export default function Dashboard({ onChanged }: { onChanged: () => void }) {
@@ -12,8 +12,14 @@ export default function Dashboard({ onChanged }: { onChanged: () => void }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    api<DashboardData>('/dashboard').then(setData).catch((e) => setError(e.message));
-    api<AssessmentSummary[]>('/assessments').then(setHistory).catch(() => undefined);
+    api<DashboardData>('/dashboard')
+      .then((payload) => (looksLikeDashboard(payload)
+        ? setData(payload)
+        : setError('Something answered on this port, but it is not the Tutora API — another project is probably using it. See the note at the top of the page.')))
+      .catch((e) => setError(e.message));
+    api<AssessmentSummary[]>('/assessments')
+      .then((list) => setHistory(Array.isArray(list) ? list : []))
+      .catch(() => undefined);
   }, []);
 
   const startDiagnostic = async () => {

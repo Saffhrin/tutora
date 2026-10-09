@@ -12,6 +12,15 @@ export type AssessmentSummary = { id: string; completed: boolean; score: number 
 export type FeedbackItem = { question_id: string; prompt: string; student_answer: string; correct: boolean; expected_answer: string; explanation: string; citation: Citation | null; topic_name: string | null; topic_id: string | null; difficulty: string };
 export type Report = { id: string; score: number; correct: number; total: number; feedback: FeedbackItem[]; weak_topics: { id: string; name: string; mastery: number }[]; mastery_changes: { topic_id: string; name: string; before: number; after: number; evidence?: number }[]; misconceptions: string[] };
 export type Assessment = { id: string; questions: Question[]; notice?: string };
+/** A Tutora dashboard always carries a learner, stats, topics and recommendations. */
+export function looksLikeDashboard(value: unknown): value is DashboardData {
+  const data = value as Partial<DashboardData> | null;
+  return data != null && typeof data === 'object'
+    && typeof data.learner === 'object' && data.learner !== null
+    && typeof data.stats === 'object' && data.stats !== null
+    && Array.isArray(data.topics) && Array.isArray(data.recommendations);
+}
+
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`/api${path}`, { ...init, headers: { ...(init?.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }), ...init?.headers } });
   if (!response.ok) {
