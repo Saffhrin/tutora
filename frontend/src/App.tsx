@@ -63,7 +63,9 @@ export default function App() {
       <main>
         {!status.online && (
           <div className="banner warn">
-            The Tutora API is not reachable. Start it with <code>uvicorn backend.main:app --port 8000</code>.
+            The Tutora API is not reachable on port {__TUTORA_API_PORT__}. Start it with{' '}
+            <code>python -m backend.main</code> (it skips to a free port automatically) or{' '}
+            <code>./scripts/dev.sh</code> for API and UI together.
           </div>
         )}
         <Routes>

@@ -388,3 +388,50 @@ def submit_assessment(assessment_id: str, request: SubmitRequest) -> dict:
         "feedback": feedback, "weak_topics": weak, "mastery_changes": mastery_changes,
         "misconceptions": misconceptions[:3],
     }
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Run the API on a free port, so another local project can keep 8000.
+
+    ``python -m backend.main`` moves to the next free port when the preferred one
+    is already taken (``TUTORA_API_PORT``/``--port`` chooses the preference and
+    ``--strict-port`` refuses to move). The Vite dev server learns the same port
+    through ``TUTORA_API_PORT``; see ``scripts/dev.sh`` for both at once.
+    """
+    import argparse
+
+    import uvicorn
+
+    from . import ports
+
+    parser = argparse.ArgumentParser(prog="python -m backend.main",
+                                     description="Run the Tutora API.")
+    parser.add_argument("--host", default=None,
+                        help=f"interface to bind (default {ports.DEFAULT_HOST}; env {ports.API_HOST_ENV})")
+    parser.add_argument("--port", type=int, default=None,
+                        help=f"preferred port, a busy one is skipped (env {ports.API_PORT_ENV})")
+    parser.add_argument("--strict-port", action="store_true",
+                        help="fail when the preferred port is taken instead of moving on")
+    parser.add_argument("--reload", action="store_true", help="auto-reload when source files change")
+    args = parser.parse_args(argv)
+
+    try:
+        port, moved, host = ports.resolve("api", preferred=args.port, host=args.host,
+                                          strict=args.strict_port)
+    except (ValueError, ports.PortUnavailable) as error:
+        print(f"Tutora: {error}", file=sys.stderr)
+        return 2
+
+    preferred = args.port if args.port is not None else ports.env_port(
+        ports.API_PORT_ENV, ports.DEFAULT_API_PORT)
+    if moved:
+        print(f"Tutora {ports.moved_notice('api', host, preferred, port)}", file=sys.stderr)
+    print(f"Tutora API listening on http://{host}:{port} — start the UI with: npm run dev",
+          flush=True)
+    uvicorn.run("backend.main:app" if args.reload else app, host=host, port=port,
+                reload=args.reload)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
