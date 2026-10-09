@@ -111,7 +111,9 @@ const check = (name, ok) => {
     && !healthy.includes('but it is not the Tutora API'));
   check('real API: dashboard rendered', healthy.includes('Dashboard') && healthy.includes('Course map'));
 
-  for (const thrown of ['a thrown string', '', new Error(''), new Error('boom')]) {
+  const weird = new Error('x');
+  weird.message = 42; // not a string: still must not crash the boundary
+  for (const thrown of ['a thrown string', '', new Error(''), new Error('boom'), weird]) {
     const state = ErrorBoundary.getDerivedStateFromError(thrown);
     check(`error boundary keeps a non-empty message (${JSON.stringify(String(thrown)) || 'empty'})`,
       typeof state.message === 'string' && state.message.length > 0);

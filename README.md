@@ -61,8 +61,8 @@ npm run dev        # http://localhost:5173, proxying /api to the API port
 
 Nothing has to be stopped by hand: both servers look for a free port before binding.
 
-* `python -m backend.main` (and `./scripts/dev.sh`) skip a busy API port and log
-  `API: 127.0.0.1:8000 is already in use (another project?), using 127.0.0.1:8001 instead.`
+* `python -m backend.main` (and `./scripts/dev.sh`) skip a busy API port and say so:
+  `Tutora API: 127.0.0.1:8000 is already in use (another project?), using 127.0.0.1:8001 instead.`
   `./scripts/dev.sh`
   passes that port to Vite, so the UI proxy follows the API. If you start the two halves
   yourself, set the same value for both: `TUTORA_API_PORT=8001 npm run dev` after the API

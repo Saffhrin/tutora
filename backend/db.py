@@ -13,7 +13,7 @@ from pathlib import Path
 
 from .env import load_env_file
 
-load_env_file()  # .env at the project root, unless TUTORA_SKIP_ENV_FILE is set
+load_env_file()  # .env at the project root, unless TUTORA_SKIP_ENV_FILE is truthy
 DATA_DIR = Path(os.environ.get("TUTORA_DATA_DIR") or "data")
 UPLOAD_DIR = DATA_DIR / "uploads"
 
