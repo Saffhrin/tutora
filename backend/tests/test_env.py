@@ -5,6 +5,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -55,3 +57,11 @@ def test_skip_flag_ignores_the_env_file(tmp_path):
     env_file = write_env_file(tmp_path, tmp_path / "from-file")
     env = {**clean_env(), "TUTORA_ENV_FILE": str(env_file), "TUTORA_SKIP_ENV_FILE": "1"}
     assert import_data_dir(env) == "data"
+
+
+@pytest.mark.parametrize("value", ["0", "false", "off", "no"])
+def test_falsey_skip_flag_still_reads_the_env_file(tmp_path, value):
+    """Only a truthy flag skips the file; "0" must not behave like "1"."""
+    env_file = write_env_file(tmp_path, tmp_path / "from-file")
+    env = {**clean_env(), "TUTORA_ENV_FILE": str(env_file), "TUTORA_SKIP_ENV_FILE": value}
+    assert import_data_dir(env) == str(tmp_path / "from-file")

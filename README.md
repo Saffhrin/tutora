@@ -62,7 +62,8 @@ npm run dev        # http://localhost:5173, proxying /api to the API port
 Nothing has to be stopped by hand: both servers look for a free port before binding.
 
 * `python -m backend.main` (and `./scripts/dev.sh`) skip a busy API port and log
-  `8000 is already in use (another project?), using 8001 instead`. `./scripts/dev.sh`
+  `API: 127.0.0.1:8000 is already in use (another project?), using 127.0.0.1:8001 instead.`
+  `./scripts/dev.sh`
   passes that port to Vite, so the UI proxy follows the API. If you start the two halves
   yourself, set the same value for both: `TUTORA_API_PORT=8001 npm run dev` after the API
   prints its port, otherwise the UI keeps proxying 8000 (to the other project).
@@ -86,8 +87,9 @@ Optional: copy `.env.example` to `.env` and set `GEMINI_API_KEY` to enable image
 understanding, audio & video transcription, AI question generation and written tutor prose.
 Without a key everything still runs, in offline extractive mode. The backend reads that file
 itself (`backend/env.py`: `GEMINI_API_KEY`, `GEMINI_MODEL`, `TUTORA_DATA_DIR`, the ports), and
-so does Vite; a value already set in the real environment always wins, and
-`TUTORA_SKIP_ENV_FILE=1` ignores the file.
+Vite reads it too. A value already set in the real environment always wins; `TUTORA_ENV_FILE`
+and `TUTORA_SKIP_ENV_FILE=1` apply to the backend and `scripts/dev.sh` only - Vite always reads
+the project-root `.env`.
 
 ## Demo material
 

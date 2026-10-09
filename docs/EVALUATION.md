@@ -5,7 +5,7 @@ sample course (1 source, 7 units, 7 topics). Nothing here is estimated, extrapol
 copied from another project. Re-run with:
 
 ```bash
-python -m pytest -q                            # 20 offline tests
+python -m pytest -q                            # offline tests, no network, no key
 python -m evaluation.audit                     # requirement-by-requirement audit of the live system
 python -m evaluation.run                       # grounding + retrieval metrics
 python -m evaluation.simulation --sessions 5   # personalization study
@@ -106,7 +106,9 @@ What this does and does not show:
 
 ## 5. Functional test coverage
 
-`python -m pytest -q` → **20 passed** (no network, no key):
+`python -m pytest -q` → **20 passed** when this was measured (no network, no key); the
+port-conflict work added `tests/test_ports.py` and `tests/test_env.py`, so the suite is
+larger now:
 
 * ingestion: text paragraphs, PDF page numbers, PPTX slide numbers, actionable missing-key
   error for images, extension/signature mismatch, empty file, unsupported type
@@ -115,6 +117,10 @@ What this does and does not show:
 * learner model: wrong answers lower mastery, correct answers raise it, idempotent submission,
   bounded updates
 * API: seeded dashboard, text paste ingestion and tagging, TXT upload end-to-end
+* ports: a busy port moves to the next free one, the environment preference wins, and the
+  CLI contract `scripts/dev.sh` relies on (port on stdout, reason on stderr, exit codes)
+* `.env`: the file reaches the backend, the real environment wins, an empty value is filled
+  in, and the test suite is fenced off from a developer's key
 
 ## 6. Raw results
 

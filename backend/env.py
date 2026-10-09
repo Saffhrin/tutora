@@ -20,6 +20,11 @@ ENV_FILE_ENV = "TUTORA_ENV_FILE"
 _ENV_LOADED = False
 
 
+def env_file_skipped() -> bool:
+    """`TUTORA_SKIP_ENV_FILE=1` skips the file; `0`, `false`, `off` and `no` do not."""
+    return (os.environ.get(SKIP_ENV) or "").strip().lower() not in ("", "0", "false", "no", "off")
+
+
 def env_file_path() -> Path:
     """`TUTORA_ENV_FILE`, else the `.env` in the project root (next to package.json)."""
     override = os.environ.get(ENV_FILE_ENV)
@@ -31,7 +36,7 @@ def env_file_path() -> Path:
 def load_env_file(path: Path | None = None) -> dict[str, str]:
     """Read `KEY=VALUE` lines from `.env` once; real environment values always win."""
     global _ENV_LOADED
-    if path is None and (os.environ.get(SKIP_ENV) or _ENV_LOADED):
+    if path is None and (env_file_skipped() or _ENV_LOADED):
         return {}
     if path is None:
         _ENV_LOADED = True

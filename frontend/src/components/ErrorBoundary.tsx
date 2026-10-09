@@ -12,7 +12,10 @@ export default class ErrorBoundary extends Component<Props, State> {
   state: State = { message: '' };
 
   static getDerivedStateFromError(error: unknown): State {
-    return { message: error instanceof Error ? error.message : String(error) };
+    // `throw ''` and `new Error('')` are legal: the message must still be non-empty,
+    // otherwise the boundary would render the broken child again and loop.
+    const message = (error instanceof Error ? error.message : String(error)).trim();
+    return { message: message || 'the page raised an error without a message' };
   }
 
   componentDidCatch(error: unknown, info: ErrorInfo) {

@@ -30,13 +30,13 @@ function portOf(url: string, fallback: number) {
 }
 
 /**
- * The proxy rewrites `/api/<x>` onto the target, so the health probe has to follow the
- * same rule: with a target that has a path, `/api/x` becomes `<target>/x`.
+ * http-proxy prepends the target path, it does not replace the matched prefix:
+ * target `http://host:8001/prefix` + `/api/health` becomes `/prefix/api/health`.
+ * The probe has to follow the same rule or it would warn about a healthy proxy.
  */
 function healthUrl(target: string) {
   const base = target.endsWith('/') ? target : `${target}/`;
-  const hasPath = new URL(base).pathname.replace(/\/$/, '') !== '';
-  return new URL(hasPath ? 'health' : 'api/health', base).toString();
+  return new URL('api/health', base).toString();
 }
 
 /**

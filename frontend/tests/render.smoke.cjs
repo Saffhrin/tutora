@@ -28,6 +28,22 @@ execFileSync(path.join(ROOT, 'node_modules', '.bin', 'esbuild'), [
   '--external:react-router-dom', '--external:react/jsx-runtime', '--external:lucide-react',
 ], { stdio: 'pipe' });
 
+// The error boundary is a class component: bundle it on its own and exercise the static
+// method, so a thrown string or `new Error('')` cannot leave the boundary re-rendering a
+// broken child (which used to blank the page).
+const BOUNDARY_ENTRY = path.join(path.dirname(BUNDLE), 'boundary-entry.tsx');
+const BOUNDARY_BUNDLE = path.join(path.dirname(BUNDLE), 'boundary.cjs');
+require('node:fs').writeFileSync(
+  BOUNDARY_ENTRY,
+  `export { default } from ${JSON.stringify(path.join(ROOT, 'frontend', 'src', 'components', 'ErrorBoundary.tsx'))};`,
+);
+execFileSync(path.join(ROOT, 'node_modules', '.bin', 'esbuild'), [
+  BOUNDARY_ENTRY, '--bundle', '--format=cjs', '--platform=node', '--jsx=automatic',
+  `--outfile=${BOUNDARY_BUNDLE}`, '--define:process.env.NODE_ENV="production"',
+  '--external:react',
+], { stdio: 'pipe' });
+const ErrorBoundary = require(BOUNDARY_BUNDLE).default;
+
 const React = require('react');
 const { createRoot } = require('react-dom/client');
 const { BrowserRouter } = require('react-router-dom');
@@ -94,6 +110,12 @@ const check = (name, ok) => {
   check('real API: no warning banner', !healthy.includes('not reachable on port')
     && !healthy.includes('but it is not the Tutora API'));
   check('real API: dashboard rendered', healthy.includes('Dashboard') && healthy.includes('Course map'));
+
+  for (const thrown of ['a thrown string', '', new Error(''), new Error('boom')]) {
+    const state = ErrorBoundary.getDerivedStateFromError(thrown);
+    check(`error boundary keeps a non-empty message (${JSON.stringify(String(thrown)) || 'empty'})`,
+      typeof state.message === 'string' && state.message.length > 0);
+  }
 
   const failed = checks.filter(([, ok]) => !ok);
   console.log(`\n${checks.length - failed.length}/${checks.length} UI checks passed`);

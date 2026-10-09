@@ -74,7 +74,7 @@ Point at the sidebar badge: *offline mode* (or *Gemini: gemini-2.5-flash* if a k
    adapter refuses to fabricate them; the simulated gains show model responsiveness, not human
    learning.
 4. Show `docs/ARCHITECTURE.md` for 20 seconds: ingestion → units → BM25 → quiz generator →
-   BKT learner model, plus the test suite (`20 passed`).
+   BKT learner model, plus the offline test suite (`python -m pytest -q`).
 
 ## 6:40–7:00 — Close
 

@@ -31,7 +31,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     return await response.json();
   } catch {
-    throw new Error('The API answered with something that is not JSON — another project may be using this port. See the note at the top of the page.');
+    throw new Error('The API answered with something that is not JSON. If that was unexpected, another project may be using this port — see the note at the top of the page.');
   }
 }
 export const post = <T>(path: string, body: unknown) => api<T>(path, { method: 'POST', body: JSON.stringify(body) });
