@@ -72,7 +72,32 @@ asset base `/tutora/` (`VITE_BASE_PATH=/tutora/`), the router is mounted with
 `basename = import.meta.env.BASE_URL`, and the built `index.html` is duplicated as
 `404.html` so deep links survive a reload.
 
-Two publishing routes are prepared in this repository:
+Current state: Pages is set to Source = “GitHub Actions” and the repository contains no
+workflow file, so nothing is published yet (`https://saffhrin.github.io/tutora/` answers
+`404 Site not found`). A first attempt added the workflow as a folder —
+`.github/workflows/deploy.yml/deploy.yml`, which GitHub ignores because it only reads
+`*.yml` files directly inside `.github/workflows/` — and that file has been removed. The
+built site itself is already committed at the root of this branch (`index.html`,
+`assets/`, `favicon.svg`, `404.html`, `.nojekyll`).
+
+To publish, pick one:
+
+1. **Actions.** Create `.github/workflows/deploy.yml` as a *file* (not a folder) and push
+   it to `cline/73s7nn7d`; it installs the root npm dependencies, builds `frontend/` and
+   deploys `frontend/dist` through the `github-pages` environment.
+2. **Branch.** Settings → Pages → Source = “Deploy from a branch”, branch
+   `cline/73s7nn7d`, folder `/(root)`: the build output already committed at this
+   branch's root is then served directly.
+
+The deployment token used from the assistant session has `contents: write` but not
+`workflows: write`, so it can push everything except `.github/workflows/*.yml`:
+
+```
+! [remote rejected] ... (refusing to allow a GitHub App to create or update workflow
+  `.github/workflows/deploy.yml` without `workflows` permission)
+```
+
+
 
 1. **Actions.** `.github/workflows/deploy.yml` installs the root npm dependencies,
    builds `frontend/` and deploys `frontend/dist` on every push to `main` or
