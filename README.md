@@ -65,6 +65,26 @@ python -m evaluation.run                         # grounding/retrieval metrics
 python -m evaluation.simulation --sessions 5     # simulated students across sessions
 ```
 
+## Deployment (GitHub Pages)
+
+The static frontend is published to <https://saffhrin.github.io/tutora/> by
+`.github/workflows/deploy.yml`: on every push to `main` it installs the root npm
+dependencies, builds the Vite project in `frontend/` with `VITE_BASE_PATH=/tutora/`,
+copies `index.html` to `404.html` so deep links survive a reload, and uploads
+`frontend/dist` with `actions/upload-pages-artifact` + `actions/deploy-pages`.
+
+Two repository settings are required before that workflow can publish anything:
+
+1. **Settings → Pages → Build and deployment → Source = “GitHub Actions”.** While it
+   stays on “Deploy from a branch”, Pages keeps rendering this README from the branch
+   root and `actions/deploy-pages` fails.
+2. **Settings → Environments → `github-pages`** has to allow the deploying branch
+   (`main`), otherwise the deploy job is rejected by the environment protection rules.
+
+Pages only serves static files, so the published site has no backend: the data views
+show the “Tutora API is not reachable” banner until the API is hosted somewhere and
+`frontend/src/api.ts` is pointed at it (contract in `docs/API.md`).
+
 ## Documentation
 
 * `docs/ARCHITECTURE.md` — system design, ingestion, grounding method, learner model, roadmap
