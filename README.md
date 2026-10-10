@@ -65,6 +65,32 @@ python -m evaluation.run                         # grounding/retrieval metrics
 python -m evaluation.simulation --sessions 5     # simulated students across sessions
 ```
 
+## Deployment (GitHub Pages)
+
+`https://saffhrin.github.io/tutora/` is a project site, so the app is built with the
+asset base `/tutora/` (`VITE_BASE_PATH=/tutora/`), the router is mounted with
+`basename = import.meta.env.BASE_URL`, and the built `index.html` is duplicated as
+`404.html` so deep links survive a reload.
+
+Two publishing routes are prepared in this repository:
+
+1. **Actions.** `.github/workflows/deploy.yml` installs the root npm dependencies,
+   builds `frontend/` and deploys `frontend/dist` on every push to `main` or
+   `cline/73s7nn7d`. While Pages is set to Source = “GitHub Actions” this is the only
+   route that can publish, and the file still has to be added (e.g. GitHub → *Add
+   file* → *Create new file* → `.github/workflows/deploy.yml`) because the token used
+   in this session lacks the `workflows` permission:
+   `refusing to allow a GitHub App to create or update workflow ... without workflows permission`.
+2. **Branch.** The same build output is committed at the root of this branch
+   (`index.html`, `assets/`, `favicon.svg`, `404.html`, `.nojekyll`). Setting
+   Settings → Pages → Source to “Deploy from a branch” (branch `cline/73s7nn7d`,
+   folder `/`) serves it immediately, and it is what Pages served before the switch
+   to “GitHub Actions”.
+
+Rebuild either copy with `npm ci && VITE_BASE_PATH=/tutora/ npm run build`. No backend
+is hosted for the Pages site, so the data views show the “Tutora API is not reachable”
+banner until the API is deployed elsewhere and `frontend/src/api.ts` points at it.
+
 ## Documentation
 
 * `docs/ARCHITECTURE.md` — system design, ingestion, grounding method, learner model, roadmap
