@@ -210,7 +210,7 @@ def answer(question: str, index: Index | None = None, topic_id: str | None = Non
                     "grounded": True,
                     "citations": [contexts[n - 1] for n in (numbers or [1])],
                     "suggested_questions": suggested_questions(topic_id),
-                    "mode": f"gemini:{provider.model_name()}",
+                    "mode": f"gemini:{provider.resolve_model()}",  # the id actually used, not the pinned one
                 }
     except Exception:
         pass  # any provider problem falls back to the deterministic extractive answer
