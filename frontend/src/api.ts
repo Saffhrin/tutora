@@ -17,6 +17,8 @@ export type Assessment = { id: string; questions: Question[]; notice?: string };
 // VITE_API_BASE, e.g. VITE_API_BASE=https://tutora-api.onrender.com/api, because GitHub
 // Pages only serves static files and has no /api of its own.
 const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? '/api';
+// Absolute URL for things the browser loads itself (iframe, video/audio src, download link).
+export const apiUrl = (path: string) => `${API_BASE}${path}`;
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, { ...init, headers: { ...(init?.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }), ...init?.headers } });
   if (!response.ok) {

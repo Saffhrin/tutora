@@ -156,8 +156,10 @@ def source_file(source_id: str):
     path = Path(row["stored_path"])
     if not path.exists():
         raise HTTPException(404, "Original file is no longer on disk")
+    # Inline, not attachment: the Library viewer embeds this in an <iframe>, and an
+    # attachment disposition makes the browser download it and leave the frame blank.
     return FileResponse(path, media_type=row["mime"] or "application/octet-stream",
-                        filename=path.name)
+                        headers={"Content-Disposition": f'inline; filename="{path.name}"'})
 
 
 @app.post("/api/sources/text")

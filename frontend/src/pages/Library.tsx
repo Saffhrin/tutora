@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AlertTriangle, FileText, Image as ImageIcon, PlayCircle, Presentation, Upload, Wand2 } from 'lucide-react';
-import { api, locationLabel, type Source, type Unit } from '../api';
+import { api, apiUrl, locationLabel, type Source, type Unit } from '../api';
 
 const KIND_ICON: Record<string, typeof FileText> = {
   pdf: FileText, slides: Presentation, video: PlayCircle, audio: PlayCircle, image: ImageIcon, text: FileText,
@@ -215,7 +215,7 @@ function OriginalPane({
   focus: Unit | null;
   mediaRef: React.MutableRefObject<HTMLVideoElement | HTMLAudioElement | null>;
 }) {
-  const file = `/api/sources/${source.id}/file`;
+  const file = apiUrl(`/sources/${source.id}/file`);
   const timestamp = focus?.location?.timestamp_seconds;
   if (source.kind === 'pdf') {
     const page = focus?.location?.page ? `#page=${focus.location.page}` : '';
