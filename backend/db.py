@@ -165,36 +165,43 @@ def set_mastery(topic_id: str, mastery: float, increment_evidence: int = 0) -> N
         conn.commit()
 
 
-AUTO_TOPIC_CAP = 8
+AUTO_TOPIC_CAP = 60          # section topics for uploads; the seeded course is not auto
+AUTO_TOPIC_DESCRIPTION = ("Auto-grouped from the headings of an uploaded source; no prerequisite "
+                          "information was stated in the material.")
 
 
-def match_topic(text: str, source_title: str = "") -> str | None:
-    """Deterministically tag a unit to the best matching topic profile."""
-    unit_words = set(keywords(text, 30))
-    best_id, best_score = None, 0.0
-    for row in list_topics():
-        profile = set(json.loads(row["keywords"] or "[]"))
-        if not profile:
-            continue
-        overlap = len(unit_words & profile)
-        score = overlap / (len(profile) ** 0.5 or 1)
-        if overlap >= 2 and score > best_score:
-            best_id, best_score = row["id"], score
-    if best_id:
-        return best_id
-    slug = re.sub(r"[^a-z0-9]+", " ", (source_title or "uploaded material").lower()).strip()
-    if not slug:
+def _topic_named(name: str) -> str | None:
+    """Reuse the topic with this exact name, or create it as an auto topic."""
+    cleaned = " ".join((name or "").split())[:80]
+    if len(cleaned) < 3:
         return None
-    existing = get_conn().execute(
-        "SELECT id FROM topics WHERE auto=1 AND lower(name)=?", (slug.title(),)
-    ).fetchone()
+    existing = get_conn().execute("SELECT id FROM topics WHERE lower(name)=lower(?)",
+                                 (cleaned,)).fetchone()
     if existing:
         return existing["id"]
     auto_count = get_conn().execute("SELECT COUNT(*) c FROM topics WHERE auto=1").fetchone()["c"]
     if auto_count >= AUTO_TOPIC_CAP:
         return None
-    return create_topic(slug.title(), f"Auto-grouped units from “{source_title}”. No prerequisite "
-                         "information was stated in the material.", auto=True)
+    return create_topic(cleaned, AUTO_TOPIC_DESCRIPTION, auto=True)
+
+
+def match_topic(text: str, source_title: str = "", source_id: str | None = None,
+                hint: str = "") -> str | None:
+    """Tag a unit to the section it came from, else to its own source's topic.
+
+    Uploaded material is never matched against another course's topic profiles: a Computer
+    Networks PDF must not land in an ML topic just because the words overlap. The section
+    hint comes from the document's own structure (heading, slide title), and units without
+    one fall back to a single topic per source so nothing is left untagged.
+    """
+    section = _topic_named(hint)
+    if section:
+        return section
+    title = source_title
+    if not title and source_id:
+        row = get_source(source_id)
+        title = (row["title"] if row is not None else "") or ""
+    return _topic_named(title) or _topic_named("Uploaded Material")
 
 
 # ---------------------------------------------------------------- sources & units
@@ -230,7 +237,7 @@ def add_unit(source_id: str, text: str, location: dict, visual_description: str 
         order = conn.execute("SELECT COALESCE(MAX(ord),-1)+1 n FROM units WHERE source_id=?",
                              (source_id,)).fetchone()["n"]
         if topic_id is None:
-            topic_id = match_topic(f"{text} {visual_description or ''} {topic_name_hint}", topic_name_hint)
+            topic_id = match_topic(text, source_id=source_id, hint=topic_name_hint)
         conn.execute(
             "INSERT INTO units (id,source_id,ord,text,topic_id,location,visual_description,keywords)"
             " VALUES (?,?,?,?,?,?,?,?)",

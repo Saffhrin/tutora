@@ -41,13 +41,68 @@ def _norm(text: str) -> str:
     return re.sub(r"\W+", "", text).casefold()
 
 
+CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+HEADING_MAX_CHARS = 80
+NUMBERED_HEADING = re.compile(r"^\d+(\.\d+)*[.)]?\s+\S")
+
+
+def _clean(text: str) -> str:
+    """Drop the control/NUL glyphs that PDF bullet extraction can leave in the text."""
+    return CONTROL_CHARS.sub(" ", text)
+
+
+def _looks_like_heading(line: str) -> bool:
+    line = " ".join(line.split())
+    if not 3 <= len(line) <= HEADING_MAX_CHARS or line.endswith((".", ";", ",")):
+        return False
+    if NUMBERED_HEADING.match(line):
+        return True
+    words = line.split()
+    if len(words) > 10:
+        return False
+    letters = [word for word in words if word[:1].isalpha()]
+    if not letters:
+        return False
+    capitalised = sum(1 for word in letters if word[:1].isupper())
+    return capitalised >= max(2, len(letters) - 1) or line.isupper()
+
+
+def _heading_from_text(text: str) -> str:
+    for line in text.splitlines()[:3]:
+        candidate = line.strip()
+        if _looks_like_heading(candidate):
+            return candidate.rstrip(":").strip()
+    return ""
+
+
+def _pdf_page_heading(page, text: str) -> str:
+    """Largest-font line on the page (slides/textbook titles), else first heading-like line."""
+    try:
+        lines = []
+        for block in page.get_text("dict").get("blocks", []):
+            for line in block.get("lines", []):
+                spans = line.get("spans", [])
+                chunk = "".join(span.get("text", "") for span in spans).strip()
+                size = max((float(span.get("size", 0) or 0) for span in spans), default=0.0)
+                if chunk:
+                    lines.append((size, chunk))
+        if lines:
+            biggest = max(size for size, _ in lines)
+            for size, chunk in lines:
+                if size >= biggest - 0.5 and 3 <= len(chunk) <= HEADING_MAX_CHARS:
+                    return " ".join(chunk.split()).rstrip(":").strip()
+    except Exception:
+        pass
+    return _heading_from_text(text)
+
+
 def _unit(text: str, location: dict, visual: dict | None = None) -> dict:
     description = ""
     if visual is not None:
         if not isinstance(visual, dict):
             raise ValueError("Gemini returned invalid image analysis. Please retry.")
-        ocr = _string(visual.get("text"), "image text")
-        description = _string(visual.get("visual_description"), "visual description")
+        ocr = _clean(_string(visual.get("text"), "image text"))
+        description = _clean(_string(visual.get("visual_description"), "visual description"))
         # Native extraction remains authoritative. Avoid reproducing the same page twice.
         normalized = _norm(text)
         additions = []
@@ -59,7 +114,7 @@ def _unit(text: str, location: dict, visual: dict | None = None) -> dict:
         text = "\n".join(filter(None, [text.strip(), *additions]))
     if description and _norm(description) not in _norm(text):
         text = "\n\n".join(filter(None, [text.strip(), "Visual description: " + description]))
-    result = {"text": text.strip(), "location": location}
+    result = {"text": _clean(text).strip(), "location": location}
     if description:
         result["visual_description"] = description
     return result
@@ -85,7 +140,26 @@ def _text(path: Path) -> list[dict]:
         raise ValueError("Text files must use UTF-8 encoding. Save as UTF-8 and upload again.") from None
     if "\x00" in text:
         raise ValueError("This does not appear to be a plain text file. Upload a UTF-8 .txt or .md file.")
-    return [_unit(part, {}) for part in re.split(r"\n\s*\n", text) if part.strip()]
+    units, section = [], ""
+    for part in re.split(r"\n\s*\n", text):
+        chunk = part.strip()
+        if not chunk:
+            continue
+        lines = chunk.splitlines()
+        first = lines[0].strip()
+        if first.startswith("#"):
+            section = first.lstrip("# ").strip() or section
+            chunk = "\n".join(lines[1:]).strip()
+            if not chunk:
+                continue
+        elif _looks_like_heading(first) and len(lines) <= 2:
+            section = first.rstrip(":").strip() or section
+            continue
+        unit = _unit(chunk, {})
+        if section:
+            unit["topic_name"] = section
+        units.append(unit)
+    return units
 
 
 def _pdf(path: Path) -> list[dict]:
@@ -99,8 +173,10 @@ def _pdf(path: Path) -> list[dict]:
             raise ValueError("This PDF is password-protected. Upload an unlocked copy.")
         if len(document) > MAX_UNITS:
             raise ValueError(f"PDF exceeds {MAX_UNITS} pages. Split it into smaller files.")
+        section = ""
         for index, page in enumerate(document):
             text = page.get_text("text").strip()
+            section = _pdf_page_heading(page, text) or section
             has_visual = bool(page.get_images() or page.get_drawings())
             visual = None
             if provider.is_enabled() and (has_visual or not text):
@@ -117,6 +193,8 @@ def _pdf(path: Path) -> list[dict]:
                 raise ValueError(f"PDF page {index + 1} could not be read. Upload a clearer scan or OCR/text version.")
             if has_visual and not provider.is_enabled() and text:
                 unit["visual_description"] = "Visual content was not interpreted; set GEMINI_API_KEY for diagram understanding."
+            if section:
+                unit["topic_name"] = section
             units.append(unit)
             _check_running_size(units)
     return units
@@ -181,6 +259,11 @@ def _slides(path: Path) -> list[dict]:
                              "PNG/JPEG/WebP images, or export slides to an OCR/text PDF.")
         if descriptions:
             unit["visual_description"] = "\n".join(dict.fromkeys(descriptions))
+        for candidate in parts:
+            line = (candidate.splitlines() or [""])[0].strip()
+            if _looks_like_heading(line):
+                unit["topic_name"] = line.rstrip(":").strip()
+                break
         units.append(unit)
         _check_running_size(units)
     return units
