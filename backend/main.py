@@ -120,6 +120,14 @@ def provider_models() -> dict:
             "available": available}
 
 
+@app.get("/api/provider/selftest")
+def provider_selftest() -> dict:
+    """Diagnostic: raw Gemini generateContent status/message (never echoes key or payload)."""
+    from . import provider
+
+    return provider.selftest()
+
+
 @app.get("/api/dashboard")
 def dashboard() -> dict:
     conn = db.get_conn()

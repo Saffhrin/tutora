@@ -161,6 +161,22 @@ def _generate_with(client: httpx.Client, model: str, parts: list[dict]) -> dict:
     return result
 
 
+def selftest() -> dict:
+    """Raw upstream status/message for one minimal generateContent call (debugging only)."""
+    key = os.environ.get("GEMINI_API_KEY", "").strip()
+    if not key:
+        return {"enabled": False, "reason": "GEMINI_API_KEY is not set on the server"}
+    model = resolve_model()
+    path = f"/v1beta/models/{model}:generateContent"
+    with httpx.Client(headers={"x-goog-api-key": key}, timeout=60) as client:
+        response = client.post(API_ROOT + path, json={
+            "contents": [{"role": "user", "parts": [{"text": "Reply with the single word: ok"}]}],
+            "generationConfig": {"temperature": 0, "maxOutputTokens": 16},
+        })
+    return {"enabled": True, "model": model, "path": path, "status": response.status_code,
+            "body": response.text[:400]}
+
+
 def generate_json(prompt: str) -> dict:
     """Generate a JSON object using Gemini's JSON response mode."""
     with httpx.Client(headers={"x-goog-api-key": _key()}, timeout=120) as client:
