@@ -43,10 +43,8 @@ def flashcards(count: int = 8, topic_ids: list[str] | None = None) -> dict:
     topics = weak_topics(topic_ids=topic_ids)
     cards: list[dict] = []
     for topic in topics:
-        rows = db.get_conn().execute(
-            "SELECT * FROM units WHERE topic_id=? ORDER BY ord LIMIT ?",
-            (topic["id"], CARDS_PER_TOPIC),
-        ).fetchall()
+        # db.list_units() joins the source title that retrieval.citation() needs.
+        rows = [row for row in db.list_units() if row["topic_id"] == topic["id"]][:CARDS_PER_TOPIC]
         for row in rows:
             sentences = _sentences(row["text"])
             if not sentences:
