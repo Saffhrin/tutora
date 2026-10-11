@@ -21,6 +21,10 @@ material does not cover are refused instead of guessed.**
 | Question verification and cross-assessment novelty | Works (reviewed bank + independent re-solve and verbatim-excerpt check for generated items) | `backend/quiz.py` |
 | Cited feedback, weak topics, likely misconceptions | Works | `backend/main.py::submit_assessment` |
 | Learner model (Bayesian knowledge tracing per topic) | Works | `backend/learning.py` |
+| Weak-topic revision: cited flashcards + study plan + listen buttons | Works | `/revision`, `backend/revision.py` |
+| Mixed-language answers (Hindi / English + Hindi / auto-detect) | Hindi prose needs `GEMINI_API_KEY` | Tutor page, `backend/retrieval.py` |
+| Upload topic tagging from the document's own headings/slide titles | Works | `backend/ingestion.py`, `backend/db.py::match_topic` |
+| Provider model resolution + raw diagnostics | Works (`/api/provider/selftest`) | `backend/provider.py` |
 | Cold start (diagnostic quiz across all topics) | Works | Dashboard button → `POST /api/assessments {diagnostic:true}` |
 | Dashboard, library viewer, tutor, practice, course map UI | Works | `frontend/` |
 | Evaluation harness (local metrics + optional RAGAS adapter) | Works; measured numbers in `docs/EVALUATION.md` | `evaluation/` |

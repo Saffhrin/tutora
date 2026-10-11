@@ -18,8 +18,8 @@ The raw output is committed to `evaluation/results/requirements_audit.json`.
 |---|---|---|
 | 1a ingest videos, textbooks, slide decks without manual preprocessing | **Done (unverified here)** | `backend/ingestion.py`: TXT/MD, PDF (per page), PPTX (slides + notes + embedded pictures) verified end-to-end; images, audio and video go through the Gemini Files API and need a key, so they are untested in this environment |
 | 1b topics, concepts, prerequisites, every unit linked to its origin | **Done** | page / slide / `timestamp_seconds` stored per unit; prerequisites come from topic metadata; uploads become `auto`-marked topics rather than invented prerequisite edges (`db.match_topic`) |
-| 1c major topics, subtopics, key concepts; tag every unit | **Partial** | Topics and per-unit keyword profiles exist and every unit is tagged. There is **no explicit subtopic hierarchy** — subtopics collapse onto the parent concept instead of being modelled as a tree |
-| 1d images, diagrams and figures | **Done (unverified here)** | PPTX embedded images, PDF pages with little text, and standalone images are read by Gemini vision and stored as `visual_description` (searchable, citable). Needs a key |
+| 1c major topics, subtopics, key concepts; tag every unit | **Partial** | Uploaded units are tagged to the document's own structure — the largest-font line on a PDF page (carried forward), the slide title, or a markdown/short heading line — and units with no heading fall back to one topic per source. Matching into another course's topics was removed (a Computer Networks PDF no longer lands in "Model Evaluation"), and control/NUL glyphs are stripped from excerpts. Subtopic hierarchy is still one flat level |
+| 1d images, diagrams and figures | **Partial** | PPTX embedded images, PDF pages with little text and standalone images go through Gemini vision into `visual_description` (searchable, citable). The key is now configured, but generation is blocked by the provider's model availability on this deployment (see below), so what the reviewer sees is the honest placeholder — and the UI no longer labels it "figure described" |
 
 ## 2. Source grounding
 
@@ -56,10 +56,28 @@ The raw output is committed to `evaluation/results/requirements_audit.json`.
 | Item | Status | Where / shortfall |
 |---|---|---|
 | 6a visual course flow map of topics and prerequisites | **Done** | `/map` page, depth computed from prerequisite metadata |
-| 6b revision material targeted at weak topics (flashcards, slides, audio briefs) | **Missing** | Roadmap |
-| 6c study schedule from weak topics, forgetting curves and exam date | **Missing** | Roadmap |
-| 6d mixed-language content / Hindi interaction alongside English | **Missing** | Roadmap |
-| 6e audio-based tutoring sessions | **Missing** | Roadmap (browser speech synthesis would need no key) |
+| 6b revision material targeted at weak topics (flashcards, slides, audio briefs) | **Done** | `/revision`: flashcards built from the weakest topics' units, back side verbatim from the source with its citation, read aloud through the browser's speech synthesis |
+| 6c study schedule from weak topics, forgetting curves and exam date | **Partial** | `GET /api/schedule` + `/revision`: expanding review intervals driven by the BKT estimate and the days left before the exam date you enter. The interval rule is a stated heuristic (`1 + round(mastery × 6)` days), not a fitted forgetting curve |
+| 6d mixed-language content / Hindi interaction alongside English | **Partial** | The tutor takes an *Answer language* (Hindi, English + Hindi, or auto-detect from Devanagari input) and instructs the model to answer in Hindi while keeping excerpt markers; the offline path says so in Hindi instead of pretending. Uploaded material itself is not translated |
+| 6e audio-based tutoring sessions | **Partial** | Read-aloud on revision cards and plan days via `speechSynthesis` (no key required). Full spoken dialogue (speech in, speech out) is not implemented |
+
+## Provider model availability (observed on the deployment)
+
+The key is valid — `GET https://generativelanguage.googleapis.com/v1beta/models` lists models —
+but `POST .../models/{id}:generateContent` answers as follows:
+
+| model id | status | message |
+|---|---|---|
+| `gemini-2.5-flash` | 404 | *This model models/gemini-2.5-flash …* (not available to this project) |
+| `gemini-2.0-flash`, `gemini-2.5-pro`, `gemini-1.5-flash`, `gemini-flash` | 404 | not found / not available |
+| `gemini-flash-latest` | 503 | *currently experiencing high demand* |
+
+So a pinned id can stop working while the `-latest` aliases keep serving. `resolve_model()`
+prefers the `-latest` aliases, accepts any candidate that is not 404 (503/429/500 mean "exists but
+busy"), retries once on 503/429 and only then degrades to the offline path. `GET
+/api/provider/selftest` prints the raw status per candidate, and `/api/dashboard` reports the model
+actually in use. Every Gemini-dependent feature therefore fails *visibly and gracefully* rather
+than silently.
 
 ## Expected deliverables
 
@@ -73,8 +91,13 @@ The raw output is committed to `evaluation/results/requirements_audit.json`.
 ## Summary
 
 Core requirements 1b, 2a, 2b, 3a, 3b, 3c and 5c are complete and covered by tests or
-evaluation runs. The remaining gaps are: conversation-linked mastery (4a), intake
-conversation (4b), subtopic hierarchy (1c), cross-model rather than same-model verification
-(3b), executing a standard evaluation framework (5a/5b), and all four optional enhancements
-(6b–6e). Nothing in this register is claimed as working without a corresponding test,
-evaluation run, or an explicit "unverified here" marker.
+evaluation runs; 6b–6e now exist in partial form. The remaining gaps are: conversation-linked
+mastery (4a), intake conversation (4b), a subtopic hierarchy deeper than one flat level (1c),
+cross-model rather than same-model verification (3b), executing a standard evaluation framework
+(5a/5b), and a working vision/generation model on this deployment (1a/1d/3a).
+
+How much to trust the machine-checked audit above: `evaluation/audit.py` exercises the **seeded
+sample course only**, so its `1c PASS` described 7 hand-written units, not real uploads — a 76-page
+uploaded PDF really produced 64 untagged units and 5 mis-tagged into ML topics before this pass.
+Treat the audit as a smoke test of the seeded path, and the manual checks in this register as the
+statement of record.
