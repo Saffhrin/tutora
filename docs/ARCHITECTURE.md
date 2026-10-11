@@ -46,12 +46,18 @@ shown in the UI instead of a half-ingested source.
 
 ## 3. Topics, concepts and prerequisites
 
-* Each unit gets a keyword profile (`db.keywords`).
-* `db.match_topic` scores a unit against every topic profile (overlap normalised by profile
-  size) and tags it to the best match, so subtopics collapse onto the concept they belong to.
-* When nothing matches, an **auto topic** is created from the source title (capped at 8) and
-  marked `auto` in the UI, with an explicit statement that no prerequisite information was
-  given — the system does not invent prerequisite edges.
+* Each unit gets a keyword profile (`db.keywords`) used for search and overlap scoring.
+* `db.match_topic(text, source_title, source_id, hint)` tags the unit to **the section it came
+  from**, using the document's own structure: the largest-font line of a PDF page (carried
+  forward while pages keep belonging to it), a PPTX slide title, or a markdown / short heading
+  line in text files. Units with no detectable heading fall back to one topic per source, so
+  nothing is left untagged.
+* **Uploaded material is never matched against another course's topics.** Keyword matching
+  across sources was removed after a 76-page Computer Networks PDF produced 64 untagged units
+  and 5 units mis-tagged into the seeded ML topics (`Model Evaluation`, `Overfitting`).
+* Uploaded topics are marked `auto` in the UI and state that no prerequisite information was
+  given — the system does not invent prerequisite edges. The per-source section cap is 60.
+* Subtopics are one flat level (section names); a deeper tree is still roadmap.
 * Prerequisites come from the topic metadata (seeded course: supervised → regression →
   gradient descent → neural networks, and regression → overfitting). The course map renders
   them by computed depth.
