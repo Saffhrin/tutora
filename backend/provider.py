@@ -75,6 +75,12 @@ def resolve_model(refresh: bool = False) -> str:
             usable = [name for name in names
                       if "flash" in name and not any(tag in name for tag in ("image", "tts", "embedding"))]
             chosen = (usable or names)[0]
+    if refresh and names:
+        # A listed id can still refuse generateContent; only a real call proves it works.
+        working = _working_model(list(dict.fromkeys([model_name(), *MODEL_PREFERENCE,
+                                                     *[n for n in names if "flash" in n]])))
+        if working:
+            chosen = working
     _MODEL_CACHE = {"name": chosen, "at": now}
     return chosen
 
@@ -161,20 +167,41 @@ def _generate_with(client: httpx.Client, model: str, parts: list[dict]) -> dict:
     return result
 
 
-def selftest() -> dict:
+def _raw_generate(model: str, timeout: float = 45) -> tuple[int, str]:
+    """One minimal generateContent call; returns (status, raw body) without masking."""
+    with httpx.Client(headers={"x-goog-api-key": _key()}, timeout=timeout) as client:
+        response = client.post(f"{API_ROOT}/models/{model}:generateContent", json={
+            "contents": [{"role": "user", "parts": [{"text": "Reply with the single word: ok"}]}],
+            "generationConfig": {"temperature": 0, "maxOutputTokens": 16},
+        })
+        return response.status_code, response.text
+
+
+def _working_model(candidates: list[str]) -> str | None:
+    """First candidate that actually answers generateContent (used when the id 404s)."""
+    for candidate in candidates:
+        try:
+            status, _body = _raw_generate(candidate)
+        except (ValueError, httpx.HTTPError, OSError):
+            continue
+        if status == 200:
+            return candidate
+    return None
+
+
+def selftest(model: str | None = None) -> dict:
     """Raw upstream status/message for one minimal generateContent call (debugging only)."""
     key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not key:
         return {"enabled": False, "reason": "GEMINI_API_KEY is not set on the server"}
-    model = resolve_model()
-    path = f"/v1beta/models/{model}:generateContent"
-    with httpx.Client(headers={"x-goog-api-key": key}, timeout=60) as client:
-        response = client.post(API_ROOT + path, json={
-            "contents": [{"role": "user", "parts": [{"text": "Reply with the single word: ok"}]}],
-            "generationConfig": {"temperature": 0, "maxOutputTokens": 16},
-        })
-    return {"enabled": True, "model": model, "path": path, "status": response.status_code,
-            "body": response.text[:400]}
+    candidates = [model] if model else list(dict.fromkeys([model_name(), *MODEL_PREFERENCE]))
+    tried = []
+    for candidate in candidates:
+        status, body = _raw_generate(candidate)
+        tried.append({"model": candidate, "status": status, "body": body[:300]})
+        if status == 200:
+            break
+    return {"enabled": True, "configured": model_name(), "resolved": resolve_model(), "tried": tried}
 
 
 def generate_json(prompt: str) -> dict:

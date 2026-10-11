@@ -121,11 +121,11 @@ def provider_models() -> dict:
 
 
 @app.get("/api/provider/selftest")
-def provider_selftest() -> dict:
-    """Diagnostic: raw Gemini generateContent status/message (never echoes key or payload)."""
+def provider_selftest(model: str | None = None) -> dict:
+    """Diagnostic: raw generateContent status per candidate model (never echoes the key)."""
     from . import provider
 
-    return provider.selftest()
+    return provider.selftest(model)
 
 
 @app.get("/api/dashboard")
