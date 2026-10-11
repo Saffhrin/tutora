@@ -28,6 +28,57 @@ def model_name() -> str:
     return os.environ.get("GEMINI_MODEL", "gemini-2.5-flash").strip() or "gemini-2.5-flash"
 
 
+MODEL_CACHE_SECONDS = 900
+MODEL_PREFERENCE = (
+    "gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash", "gemini-flash",
+    "gemini-2.5-pro", "gemini-1.5-flash",
+)
+_MODEL_CACHE: dict[str, object] = {"name": None, "at": 0.0}
+
+
+def list_models() -> list[str]:
+    """Model ids this key may use for generateContent."""
+    with httpx.Client(headers={"x-goog-api-key": _key()}, timeout=30) as client:
+        data = _response_json(_request(client, "GET", f"{API_ROOT}/models?pageSize=200"))
+    names: list[str] = []
+    models = data.get("models")
+    for item in models if isinstance(models, list) else []:
+        if not isinstance(item, dict):
+            continue
+        name = item.get("name")
+        methods = item.get("supportedGenerationMethods") or []
+        if isinstance(name, str) and name.startswith("models/") and "generateContent" in methods:
+            names.append(name.split("/", 1)[1])
+    return names
+
+
+def resolve_model(refresh: bool = False) -> str:
+    """The configured model when the key serves it, otherwise the best available one.
+
+    Pinned ids get retired or renamed and then answer 404, so ask the API what this key
+    actually serves and fall back inside a small preference list.
+    """
+    global _MODEL_CACHE
+    configured = model_name()
+    cached = _MODEL_CACHE.get("name")
+    now = time.monotonic()
+    if not refresh and isinstance(cached, str) and now - float(_MODEL_CACHE.get("at", 0.0)) < MODEL_CACHE_SECONDS:
+        return cached
+    chosen = configured
+    try:
+        names = list_models()
+    except ValueError:
+        names = []
+    if names and configured not in names:
+        chosen = next((candidate for candidate in MODEL_PREFERENCE if candidate in names), "")
+        if not chosen:
+            usable = [name for name in names
+                      if "flash" in name and not any(tag in name for tag in ("image", "tts", "embedding"))]
+            chosen = (usable or names)[0]
+    _MODEL_CACHE = {"name": chosen, "at": now}
+    return chosen
+
+
 def _key() -> str:
     key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not key:
@@ -69,7 +120,16 @@ def _response_json(response) -> dict:
 
 
 def _generate(client: httpx.Client, parts: list[dict]) -> dict:
-    model = model_name()
+    """generateContent with automatic model resolution (one retry when the id 404s)."""
+    try:
+        return _generate_with(client, resolve_model(), parts)
+    except ValueError as error:
+        if "HTTP 404" not in str(error):
+            raise
+    return _generate_with(client, resolve_model(refresh=True), parts)
+
+
+def _generate_with(client: httpx.Client, model: str, parts: list[dict]) -> dict:
     if not re.fullmatch(r"[A-Za-z0-9._-]+", model):
         raise ValueError("GEMINI_MODEL must be a model name, such as gemini-2.5-flash.")
     response = _request(

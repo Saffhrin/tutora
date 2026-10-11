@@ -96,9 +96,28 @@ def provider_status() -> dict:
     try:
         from . import provider
 
-        return {"enabled": bool(provider.is_enabled()), "model": provider.model_name()}
+        if not provider.is_enabled():
+            return {"enabled": False, "model": provider.model_name()}
+        return {"enabled": True, "model": provider.resolve_model()}
     except Exception:
         return {"enabled": False, "model": "unavailable"}
+
+
+@app.get("/api/provider/models")
+def provider_models() -> dict:
+    """Diagnostic: which Gemini ids this server's key can use (a pinned id can 404)."""
+    from . import provider
+
+    configured = provider.model_name()
+    if not provider.is_enabled():
+        return {"enabled": False, "configured": configured, "resolved": None, "available": []}
+    try:
+        available = provider.list_models()
+    except ValueError as error:
+        return {"enabled": True, "configured": configured, "resolved": provider.resolve_model(),
+                "available": [], "error": str(error)}
+    return {"enabled": True, "configured": configured, "resolved": provider.resolve_model(),
+            "available": available}
 
 
 @app.get("/api/dashboard")
