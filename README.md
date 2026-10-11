@@ -81,11 +81,14 @@ directly. With Source = “GitHub Actions”, `.github/workflows/deploy.yml` bui
 Rebuild with `npm ci && VITE_BASE_PATH=/tutora/ npm run build`.
 
 **Backend.** Pages only serves static files, so the published site needs an API the
-browser can reach: build with `VITE_API_BASE` pointing at it, e.g.
+browser can reach. The live site is built against the deployed API with
 
 ```bash
-VITE_BASE_PATH=/tutora/ VITE_API_BASE=https://<your-api-host>/api npm run build
+VITE_BASE_PATH=/tutora/ VITE_API_BASE=https://tutora-api-1lv0.onrender.com/api npm run build
 ```
+
+On the free plan that API sleeps after 15 minutes idle, so the first visit can take
+~30-60 s to wake up (reload once); it re-seeds the sample course on every start.
 
 `Dockerfile` packages that API (`uvicorn backend.main:app --host 0.0.0.0 --port $PORT`,
 SQLite under `TUTORA_DATA_DIR=/data`, optional `GEMINI_API_KEY`); CORS in
