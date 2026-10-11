@@ -78,9 +78,19 @@ The build output is committed at the root of this branch (`index.html`, `assets/
 directly. With Source = “GitHub Actions”, `.github/workflows/deploy.yml` builds
 `frontend/` and deploys `frontend/dist` through the `github-pages` environment instead.
 
-Rebuild with `npm ci && VITE_BASE_PATH=/tutora/ npm run build`. No backend is hosted for
-the Pages site, so the data views show the “Tutora API is not reachable” banner until the
-API is deployed elsewhere and `frontend/src/api.ts` points at it.
+Rebuild with `npm ci && VITE_BASE_PATH=/tutora/ npm run build`.
+
+**Backend.** Pages only serves static files, so the published site needs an API the
+browser can reach: build with `VITE_API_BASE` pointing at it, e.g.
+
+```bash
+VITE_BASE_PATH=/tutora/ VITE_API_BASE=https://<your-api-host>/api npm run build
+```
+
+`Dockerfile` packages that API (`uvicorn backend.main:app --host 0.0.0.0 --port $PORT`,
+SQLite under `TUTORA_DATA_DIR=/data`, optional `GEMINI_API_KEY`); CORS in
+`backend/main.py` already allows any origin. Without it the live page shows the
+“Tutora API is not reachable” banner and the data views stay empty.
 
 ## Documentation
 

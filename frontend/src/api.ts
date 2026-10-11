@@ -12,8 +12,13 @@ export type AssessmentSummary = { id: string; completed: boolean; score: number 
 export type FeedbackItem = { question_id: string; prompt: string; student_answer: string; correct: boolean; expected_answer: string; explanation: string; citation: Citation | null; topic_name: string | null; topic_id: string | null; difficulty: string };
 export type Report = { id: string; score: number; correct: number; total: number; feedback: FeedbackItem[]; weak_topics: { id: string; name: string; mastery: number }[]; mastery_changes: { topic_id: string; name: string; before: number; after: number; evidence?: number }[]; misconceptions: string[] };
 export type Assessment = { id: string; questions: Question[]; notice?: string };
+// Where the FastAPI backend lives. Local dev keeps "/api" and lets the Vite dev server
+// proxy it to http://localhost:8000 (see frontend/vite.config.ts). A deployed build sets
+// VITE_API_BASE, e.g. VITE_API_BASE=https://tutora-api.onrender.com/api, because GitHub
+// Pages only serves static files and has no /api of its own.
+const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? '/api';
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api${path}`, { ...init, headers: { ...(init?.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }), ...init?.headers } });
+  const response = await fetch(`${API_BASE}${path}`, { ...init, headers: { ...(init?.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }), ...init?.headers } });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     const detail = body?.detail;
