@@ -137,9 +137,11 @@ def generate(config: dict) -> tuple[list[dict], str | None]:
         notice = extra_notice
 
     if not selected:
-        return [], ("Every verified question for this scope has already been used in a previous "
-                    "assessment. Widen the topic scope, or set GEMINI_API_KEY to generate new "
-                    "verified items.")
+        # Distinguish the two real causes: the reviewed bank is exhausted, or generation ran and
+        # nothing passed verification. Saying "already been used" for the second case was misleading.
+        return [], notice or ("Every verified question for this scope has already been used in a "
+                              "previous assessment. Widen the topic scope, or set GEMINI_API_KEY to "
+                              "generate new verified items.")
     if len(selected) < count:
         notice = notice or (f"Only {len(selected)} verified unseen questions were available for "
                             f"this scope out of the {count} requested.")

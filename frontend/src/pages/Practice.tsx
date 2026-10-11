@@ -97,9 +97,9 @@ export default function Practice({ onChanged }: { onChanged: () => void }) {
       </header>
 
       {error && (
-        <div className={`banner ${/already been used/.test(error) ? 'quiet' : 'warn'}`}>
+        <div className={`banner ${/already been used|failed verification|verified question/.test(error) ? 'quiet' : 'warn'}`}>
           {/already been used/.test(error)
-            ? `${error} Every verified item for this scope has been answered, so nothing is repeated.`
+            ? `${error} Nothing is repeated across assessments, so widen the scope or add material.`
             : error}
         </div>
       )}
