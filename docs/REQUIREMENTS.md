@@ -40,7 +40,7 @@ The raw output is committed to `evaluation/results/requirements_audit.json`.
 
 | Item | Status | Where / shortfall |
 |---|---|---|
-| 4a per-topic mastery updating after every quiz **and conversation** | **Partial** | Quiz path is complete (BKT, evidence counts, idempotent submission, bounded updates). The **conversation path deliberately does not move mastery**: chat and reading are not treated as knowledge evidence, so mastery only changes on graded answers. A conversation-linked mastery update (for example a micro-check question after a tutor answer) is not implemented |
+| 4a per-topic mastery updating after every quiz **and conversation** | **Partial** | Quiz path is complete (BKT, evidence counts, idempotent submission, bounded updates). Chat text itself still never moves mastery — a read answer is not evidence — but every tutor answer with citations now offers **“Quiz me on this (graded)”**: one question on the cited topic, graded through the same BKT update. So a conversation can end in graded evidence without pretending that reading equals knowing |
 | 4b new students with no history (diagnostic quiz, intake conversation) | **Partial** | Diagnostic quiz across all topics is implemented and is the cold-start path; the **intake conversation is not implemented** |
 
 ## 5. System evaluation

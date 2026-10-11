@@ -118,6 +118,7 @@ def citation(row, excerpt: str, url_base: str = "/library") -> dict:
     location = db.location_dict(row["location"])
     return {
         "unit_id": row["id"], "source_id": row["source_id"], "source_title": row["source_title"],
+        "topic_id": row["topic_id"],
         "excerpt": excerpt.strip(), "location": location,
         "location_label": db.location_label(location),
         "url": f"{url_base}?source={row['source_id']}&unit={row['id']}",

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { CornerDownLeft, ShieldCheck, ShieldOff, Sparkles } from 'lucide-react';
 import { api, post, type ChatMessage, type ChatReply, type Topic } from '../api';
 import Citation from '../components/Citation';
@@ -16,6 +16,7 @@ export default function Tutor() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     api<Topic[]>('/topics').then(setTopics).catch(() => undefined);
@@ -33,6 +34,21 @@ export default function Tutor() {
   }, []);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, busy]);
+
+  const quickCheck = async (topicId?: string | null) => {
+    setBusy(true);
+    setError('');
+    try {
+      const created = await post<{ id: string }>('/assessments', {
+        topic_ids: topicId ? [topicId] : [], count: 1, kind: 'mixed', difficulty: 'adaptive',
+      });
+      navigate(`/practice?assessment=${created.id}`);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const ask = async (text: string) => {
     const question = text.trim();
@@ -103,6 +119,16 @@ export default function Tutor() {
             {message.citations.length > 0 && (
               <div className="citations">
                 {message.citations.map((citation) => <Citation key={citation.unit_id} citation={citation} />)}
+              </div>
+            )}
+            {message.role === 'tutor' && message.citations.length > 0 && (
+              <div className="controls">
+                <button className="ghost" onClick={() => quickCheck(message.citations[0]?.topic_id)} disabled={busy}>
+                  <ShieldCheck size={13} /> Quiz me on this (graded)
+                </button>
+                <small className="muted tiny">
+                  Mastery only moves on graded answers — this asks one question on the cited topic.
+                </small>
               </div>
             )}
             {message.mode && <small className="muted tiny">engine: {message.mode}</small>}
