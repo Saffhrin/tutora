@@ -96,7 +96,13 @@ export default function Practice({ onChanged }: { onChanged: () => void }) {
         </button>
       </header>
 
-      {error && <div className="banner warn">{error}</div>}
+      {error && (
+        <div className={`banner ${/already been used/.test(error) ? 'quiet' : 'warn'}`}>
+          {/already been used/.test(error)
+            ? `${error} Every verified item for this scope has been answered, so nothing is repeated.`
+            : error}
+        </div>
+      )}
 
       {!assessment && (
         <section className="card">

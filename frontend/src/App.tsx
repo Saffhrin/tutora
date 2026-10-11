@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { NavLink, Route, Routes, useNavigate } from 'react-router-dom';
-import { BookOpen, GraduationCap, LayoutDashboard, Library, Network, Sparkles, WifiOff } from 'lucide-react';
+import { BookOpen, GraduationCap, LayoutDashboard, Library, Lightbulb, Network, Sparkles, WifiOff } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import LibraryPage from './pages/Library';
 import Tutor from './pages/Tutor';
 import Practice from './pages/Practice';
 import CourseMap from './pages/CourseMap';
+import Revision from './pages/Revision';
 import { api, type DashboardData } from './api';
 
 const NAV = [
@@ -14,6 +15,7 @@ const NAV = [
   { to: '/tutor', label: 'Tutor', icon: GraduationCap, end: false },
   { to: '/practice', label: 'Practice', icon: BookOpen, end: false },
   { to: '/map', label: 'Course map', icon: Network, end: false },
+  { to: '/revision', label: 'Revision', icon: Lightbulb, end: false },
 ];
 
 export type Status = { online: boolean; provider: DashboardData['provider'] | null };
@@ -72,6 +74,7 @@ export default function App() {
           <Route path="/tutor" element={<Tutor />} />
           <Route path="/practice" element={<Practice onChanged={refresh} />} />
           <Route path="/map" element={<CourseMap />} />
+          <Route path="/revision" element={<Revision />} />
         </Routes>
       </main>
     </div>

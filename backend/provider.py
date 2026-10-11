@@ -29,9 +29,12 @@ def model_name() -> str:
 
 
 MODEL_CACHE_SECONDS = 900
+# Current-generation aliases first: pinned ids (gemini-2.5-flash, ...) now answer
+# 404 "not available" for projects created after their retirement, while the -latest
+# aliases keep working.
 MODEL_PREFERENCE = (
-    "gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash", "gemini-flash",
-    "gemini-2.5-pro", "gemini-1.5-flash",
+    "gemini-flash-latest", "gemini-flash-lite-latest", "gemini-pro-latest",
+    "gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash", "gemini-1.5-flash",
 )
 _MODEL_CACHE: dict[str, object] = {"name": None, "at": 0.0}
 
@@ -130,7 +133,11 @@ def _generate(client: httpx.Client, parts: list[dict]) -> dict:
     try:
         return _generate_with(client, resolve_model(), parts)
     except ValueError as error:
-        if "HTTP 404" not in str(error):
+        message = str(error)
+        if "HTTP 503" in message or "HTTP 429" in message:
+            time.sleep(2)      # transient overload: one bounded retry, then degrade gracefully
+            return _generate_with(client, resolve_model(), parts)
+        if "HTTP 404" not in message:
             raise
     return _generate_with(client, resolve_model(refresh=True), parts)
 
@@ -185,6 +192,9 @@ def _working_model(candidates: list[str]) -> str | None:
         except (ValueError, httpx.HTTPError, OSError):
             continue
         if status == 200:
+            return candidate
+        if status not in (404, 400):
+            # 503/429/500 mean the id exists but is busy or throttled - usable.
             return candidate
     return None
 

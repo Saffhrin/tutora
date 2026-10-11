@@ -260,6 +260,7 @@ def source_dict(row: sqlite3.Row) -> dict:
     return {
         "id": row["id"], "title": row["title"], "kind": row["kind"], "status": row["status"],
         "error": row["error"], "unit_count": int(row["unit_count"]),
+        "has_file": bool(row["stored_path"]),
         "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(row["created_at"])),
     }
 

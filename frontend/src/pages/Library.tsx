@@ -3,6 +3,10 @@ import { useSearchParams } from 'react-router-dom';
 import { AlertTriangle, FileText, Image as ImageIcon, PlayCircle, Presentation, Upload, Wand2 } from 'lucide-react';
 import { api, apiUrl, locationLabel, type Source, type Unit } from '../api';
 
+// Ingestion stores this placeholder when no Gemini key was available; it is not a description.
+const isDescribed = (description?: string | null) =>
+  Boolean(description) && !/not interpreted/i.test(description as string);
+
 const KIND_ICON: Record<string, typeof FileText> = {
   pdf: FileText, slides: Presentation, video: PlayCircle, audio: PlayCircle, image: ImageIcon, text: FileText,
 };
@@ -193,10 +197,10 @@ export default function Library({ onChanged }: { onChanged: () => void }) {
                     <div className="unit-head">
                       <b>{unit.location.label ?? locationLabel(unit.location)}</b>
                       <span className="chip">{unit.topic_name ?? 'untagged'}</span>
-                      {unit.visual_description && <span className="chip alt">figure described</span>}
+                      {isDescribed(unit.visual_description) && <span className="chip alt">figure described</span>}
                     </div>
                     <p>{unit.text.length > 420 ? `${unit.text.slice(0, 420)}…` : unit.text}</p>
-                    {unit.visual_description && <p className="muted small">Visual: {unit.visual_description}</p>}
+                    {isDescribed(unit.visual_description) && <p className="muted small">Visual: {unit.visual_description}</p>}
                   </li>
                 ))}
               </ul>
@@ -216,6 +220,17 @@ function OriginalPane({
   mediaRef: React.MutableRefObject<HTMLVideoElement | HTMLAudioElement | null>;
 }) {
   const file = apiUrl(`/sources/${source.id}/file`);
+  if (source.has_file === false) {
+    return (
+      <div className="original">
+        <div className="unit-head"><b>Original file</b></div>
+        <p className="muted small">
+          No original file is stored for this source (it is seeded course text), so there is nothing to
+          open — the cited excerpt above is the exact stored unit.
+        </p>
+      </div>
+    );
+  }
   const timestamp = focus?.location?.timestamp_seconds;
   if (source.kind === 'pdf') {
     const page = focus?.location?.page ? `#page=${focus.location.page}` : '';

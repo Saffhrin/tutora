@@ -10,6 +10,7 @@ export default function Tutor() {
   const [messages, setMessages] = useState<Entry[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [scope, setScope] = useState('');
+  const [language, setLanguage] = useState('');
   const [draft, setDraft] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -41,7 +42,7 @@ export default function Tutor() {
     setMessages((current) => [...current, { role: 'student', content: question, citations: [] }]);
     setBusy(true);
     try {
-      const reply = await post<ChatReply>('/chat', { message: question, topic_id: scope || null });
+      const reply = await post<ChatReply>('/chat', { message: question, topic_id: scope || null, language: language || null });
       setMessages((current) => [...current, {
         role: 'tutor', content: reply.answer, citations: reply.citations,
         grounded: reply.grounded, mode: reply.mode,
@@ -71,6 +72,14 @@ export default function Tutor() {
           <select value={scope} onChange={(event) => setScope(event.target.value)}>
             <option value="">All topics</option>
             {topics.map((topic) => <option key={topic.id} value={topic.id}>{topic.name}</option>)}
+          </select>
+        </label>
+        <label className="scope">
+          <span>Answer language</span>
+          <select value={language} onChange={(event) => setLanguage(event.target.value)}>
+            <option value="">English (Hindi questions answered in Hindi)</option>
+            <option value="hindi">हिंदी · Hindi</option>
+            <option value="bilingual">English + हिंदी</option>
           </select>
         </label>
       </header>

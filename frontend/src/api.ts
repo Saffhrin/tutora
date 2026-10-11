@@ -1,5 +1,5 @@
 export type Topic = { id: string; name: string; description: string; prerequisites: string[]; mastery: number; evidence_count: number; unit_count?: number; auto?: boolean };
-export type Source = { id: string; title: string; kind: 'text' | 'pdf' | 'slides' | 'video' | 'image' | 'audio'; status: 'ready' | 'processing' | 'failed'; unit_count: number; created_at: string; error?: string | null };
+export type Source = { id: string; title: string; kind: 'text' | 'pdf' | 'slides' | 'video' | 'image' | 'audio'; status: 'ready' | 'processing' | 'failed'; unit_count: number; created_at: string; error?: string | null; has_file?: boolean };
 export type Location = { page?: number; slide?: number; timestamp_seconds?: number; label?: string };
 export type Unit = { id: string; source_id: string; text: string; topic_id: string | null; topic_name: string | null; location: Location; visual_description?: string | null; source_title?: string | null };
 export type Citation = { unit_id: string; source_id: string; source_title: string; excerpt: string; location: Location; location_label?: string; url: string };
@@ -12,6 +12,11 @@ export type AssessmentSummary = { id: string; completed: boolean; score: number 
 export type FeedbackItem = { question_id: string; prompt: string; student_answer: string; correct: boolean; expected_answer: string; explanation: string; citation: Citation | null; topic_name: string | null; topic_id: string | null; difficulty: string };
 export type Report = { id: string; score: number; correct: number; total: number; feedback: FeedbackItem[]; weak_topics: { id: string; name: string; mastery: number }[]; mastery_changes: { topic_id: string; name: string; before: number; after: number; evidence?: number }[]; misconceptions: string[] };
 export type Assessment = { id: string; questions: Question[]; notice?: string };
+export type RevisionCard = { id: string; topic_id: string; topic_name: string; mastery: number; front: string; back: string; citation: Citation };
+export type RevisionPayload = { cards: RevisionCard[]; topics: Topic[] };
+export type ScheduleItem = { topic_id: string; name: string; mastery: number; reason: string };
+export type ScheduleDay = { date: string; items: ScheduleItem[]; minutes: number; minutes_per_topic: number };
+export type SchedulePayload = { exam_date: string | null; days_until_exam: number | null; plan: ScheduleDay[]; topics: Topic[]; minutes_per_day: number; method: string };
 // Where the FastAPI backend lives. Local dev keeps "/api" and lets the Vite dev server
 // proxy it to http://localhost:8000 (see frontend/vite.config.ts). A deployed build sets
 // VITE_API_BASE, e.g. VITE_API_BASE=https://tutora-api.onrender.com/api, because GitHub

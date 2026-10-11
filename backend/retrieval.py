@@ -18,6 +18,16 @@ REFUSAL = ("I could not find support for that in the uploaded material, so I wil
            "from general knowledge. Try rephrasing with a term from your course, upload the "
            "relevant source, or ask about one of the topics already in your library.")
 
+LANGUAGE_RULES = {
+    "hindi": "Write the answer in Hindi (Devanagari script); keep technical terms, numbers "
+             "and the [n] excerpt markers unchanged.",
+    "bilingual": "Write the answer in English, then repeat the key points in Hindi (Devanagari), "
+                 "keeping the [n] excerpt markers unchanged.",
+}
+HINDI_OFFLINE_NOTE = ("ऑफ़लाइन मोड: नीचे दिया गया अंश मूल स्रोत से शब्दशः लिया गया है; "
+                      "हिंदी व्याख्या के लिए सर्वर पर GEMINI_API_KEY चाहिए।")
+DEVANAGARI = re.compile(r"[ऀ-ॿ]")
+
 MIN_SCORE = 1.6          # BM25 score required to treat a query as in-material
 MIN_QUERY_TERMS = 1
 
@@ -157,14 +167,15 @@ def answer_extractive(question: str, index: Index, topic_id: str | None = None,
             "suggested_questions": suggested_questions(topic_id), "mode": "extractive"}
 
 
-def tutor_prompt(question: str, contexts: list[dict]) -> str:
+def tutor_prompt(question: str, contexts: list[dict], language: str | None = None) -> str:
     blocks = "\n\n".join(
         f"[{i + 1}] ({context['source_title']}, {context['location_label']})\n{context['excerpt']}"
         for i, context in enumerate(contexts)
     )
     return (
         "You are Tutora, a source-grounded study tutor.\n"
-        "Rules: use ONLY the numbered excerpts below. Every factual sentence must end with its "
+        + (LANGUAGE_RULES[language] + "\n" if language in LANGUAGE_RULES else "")
+        + "Rules: use ONLY the numbered excerpts below. Every factual sentence must end with its "
         "excerpt markers like [1]. Never add outside knowledge, guesses, or new numbers. "
         "If the excerpts do not answer the question, reply exactly: "
         f"{REFUSAL}\n\n"
@@ -174,8 +185,11 @@ def tutor_prompt(question: str, contexts: list[dict]) -> str:
 
 
 def answer(question: str, index: Index | None = None, topic_id: str | None = None,
-           url_base: str = "/library") -> dict:
+           url_base: str = "/library", language: str | None = None) -> dict:
     index = index or Index()
+    language = (language or "").strip().lower() or None
+    if language is None and DEVANAGARI.search(question or ""):
+        language = "hindi"  # a Hindi question gets a Hindi answer without an extra setting
     hits = index.search(question, k=4, topic_id=topic_id)
     if not hits or hits[0][1] < MIN_SCORE:
         return {"answer": REFUSAL, "grounded": False, "citations": [],
@@ -186,7 +200,7 @@ def answer(question: str, index: Index | None = None, topic_id: str | None = Non
         from . import provider
 
         if provider.is_enabled():
-            payload = provider.generate_json(tutor_prompt(question, contexts))
+            payload = provider.generate_json(tutor_prompt(question, contexts, language))
             text = str(payload.get("answer", "")).strip()
             used = payload.get("used") or [1]
             numbers = [int(n) for n in used if str(n).isdigit() and 1 <= int(n) <= len(contexts)]
@@ -200,4 +214,7 @@ def answer(question: str, index: Index | None = None, topic_id: str | None = Non
                 }
     except Exception:
         pass  # any provider problem falls back to the deterministic extractive answer
-    return answer_extractive(question, index, topic_id, url_base)
+    result = answer_extractive(question, index, topic_id, url_base)
+    if language == "hindi" and result.get("answer") != REFUSAL:
+        result["answer"] = f"{HINDI_OFFLINE_NOTE}\n\n{result['answer']}"
+    return result

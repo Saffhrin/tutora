@@ -34,6 +34,7 @@ app.add_middleware(
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=2000)
     topic_id: str | None = None
+    language: str | None = None      # "hindi", "bilingual", or None (Devanagari is auto-detected)
 
 
 class AssessmentRequest(BaseModel):
@@ -250,7 +251,8 @@ def topics() -> list[dict]:
 @app.post("/api/chat")
 def chat(request: ChatRequest) -> dict:
     index = retrieval.Index()
-    result = retrieval.answer(request.message, index, request.topic_id)
+    result = retrieval.answer(request.message, index, request.topic_id,
+                              language=request.language)
     db.save_chat("student", request.message, topic_id=request.topic_id)
     db.save_chat("tutor", result["answer"], result["citations"], request.topic_id, result["mode"])
     return result
@@ -264,6 +266,25 @@ def chat_history() -> list[dict]:
          "created_at": row["created_at"]}
         for row in reversed(db.recent_chat(40))
     ]
+
+
+@app.get("/api/revision")
+def revision_cards(count: int = 8, topic_ids: str | None = None) -> dict:
+    """Flashcards for the weakest topics, each backed by a verbatim cited excerpt (6b)."""
+    from . import revision as revision_module
+
+    wanted = [item.strip() for item in (topic_ids or "").split(",") if item.strip()] or None
+    return revision_module.flashcards(count=max(1, min(int(count), 20)), topic_ids=wanted)
+
+
+@app.get("/api/schedule")
+def study_schedule(exam_date: str | None = None, minutes_per_day: int = 30, days: int = 7) -> dict:
+    """Expanding-interval revision plan from the learner model and an exam date (6c)."""
+    from . import revision as revision_module
+
+    return revision_module.schedule(exam_date=exam_date,
+                                    minutes_per_day=max(5, min(int(minutes_per_day), 240)),
+                                    days=max(1, min(int(days), 30)))
 
 
 @app.post("/api/assessments")
